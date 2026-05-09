@@ -23,7 +23,7 @@ export function Navbar() {
             className={cn(
                 "fixed top-0 left-0 right-0 z-50 transition-all duration-500",
                 scrolled
-                    ? "border-b border-white/[0.04] bg-background/70 backdrop-blur-xl"
+                    ? "border-b border-white/4 bg-background/70 backdrop-blur-xl"
                     : "bg-transparent"
             )}
         >
@@ -38,7 +38,7 @@ export function Navbar() {
                 </Link>
 
                 <div className="hidden items-center gap-1 md:flex">
-                    {["Features", "How It Works", "Pricing"].map((item) => (
+                    {["Features", "How It Works"].map((item) => (
                         <Link
                             key={item}
                             href={`#${item.toLowerCase().replace(/\s+/g, "-")}`}
