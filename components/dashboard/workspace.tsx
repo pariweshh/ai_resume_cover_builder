@@ -14,11 +14,15 @@ import { ExportModal } from "@/components/shared/export-modal";
 import { useResume } from "@/hooks/useResume";
 import { useStreaming } from "@/hooks/useStreaming";
 import { Sparkles, Download } from "lucide-react";
+import { ExportPanel } from "../shared/export-panel";
+import { SettingsPanel } from "../settings/settings-panel";
+import { useSettings } from "@/hooks/useSettings";
 
 export function Workspace() {
     const [activeTab, setActiveTab] = useState("upload");
     const [showExport, setShowExport] = useState(false);
     const [isParsing, setIsParsing] = useState(false);
+    const { settings } = useSettings();
 
     const resume = useResume();
 
@@ -76,8 +80,8 @@ export function Workspace() {
             return;
         }
         setActiveTab("generate");
-        startStreaming(resume.rawText, resume.jobDescription);
-    }, [resume, startStreaming]);
+        startStreaming(resume.rawText, resume.jobDescription, settings.enhancementTone);
+    }, [resume, startStreaming, settings.enhancementTone]);
 
     return (
         <div className="flex h-screen">
@@ -98,6 +102,8 @@ export function Workspace() {
                         {activeTab === "ats" && "ATS Analysis"}
                         {activeTab === "cover" && "Cover Letter"}
                         {activeTab === "export" && "Export"}
+                        {activeTab === "settings" && "Settings"}
+
                     </h1>
                     <div className="flex items-center gap-2">
                         {resume.currentResume && (
@@ -210,11 +216,7 @@ export function Workspace() {
                                         onChange={(r) => resume.updateCurrentResume(() => r)}
                                         lockedSections={resume.lockedSections}
                                         onToggleLock={resume.toggleLock}
-                                        onRegenerateSection={(section, index) => {
-                                            toast.info(
-                                                `Regenerating ${section}${index !== undefined ? ` #${index + 1}` : ""}...`
-                                            );
-                                        }}
+                                        jobDescription={resume.jobDescription}
                                     />
 
                                 </div>
@@ -254,6 +256,35 @@ export function Workspace() {
                                 />
                             </motion.div>
                         )}
+
+                        {activeTab === "export" && resume.currentResume && (
+                            <motion.div
+                                key="export"
+                                initial={{ opacity: 0, y: 8 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                exit={{ opacity: 0, y: -8 }}
+                                className="flex-1 overflow-y-auto"
+                            >
+                                <ExportPanel
+                                    resume={resume.currentResume}
+                                    coverLetter={resume.coverLetter}
+                                />
+                            </motion.div>
+                        )}
+
+                        {activeTab === "settings" && (
+                            <motion.div
+                                key="settings"
+                                initial={{ opacity: 0, y: 8 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                exit={{ opacity: 0, y: -8 }}
+                                className="flex-1 overflow-y-auto"
+                            >
+                                <SettingsPanel />
+                            </motion.div>
+                        )}
+
+
                     </AnimatePresence>
                 </div>
             </main>

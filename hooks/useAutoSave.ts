@@ -14,6 +14,20 @@ export function useAutoSave(
     useEffect(() => {
         if (!resume) return;
 
+        // Check auto-save setting
+        let autoSaveEnabled = true;
+        try {
+            const settingsRaw = localStorage.getItem("resumeforge_settings");
+            if (settingsRaw) {
+                const settings = JSON.parse(settingsRaw);
+                autoSaveEnabled = settings.autoSave !== false;
+            }
+        } catch {
+            // Default to enabled
+        }
+
+        if (!autoSaveEnabled) return;
+
         clearTimeout(timeoutRef.current);
         timeoutRef.current = setTimeout(() => {
             try {

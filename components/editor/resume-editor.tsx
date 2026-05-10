@@ -2,8 +2,15 @@
 
 import { useState } from "react";
 import { SectionEditor } from "./section-editor";
+import { useRegenerate } from "@/hooks/useRegenerate";
 import { cn } from "@/lib/utils";
-import type { ResumeSchema, ExperienceEntry, EducationEntry, ProjectEntry } from "@/types";
+import type {
+    ResumeSchema,
+    ExperienceEntry,
+    EducationEntry,
+    ProjectEntry,
+} from "@/types";
+import { RefreshCw } from "lucide-react";
 
 type ResumeEditorProps = {
     resume: ResumeSchema;
@@ -11,6 +18,7 @@ type ResumeEditorProps = {
     lockedSections?: Set<string>;
     onToggleLock?: (section: string) => void;
     onRegenerateSection?: (section: string, index?: number) => void;
+    jobDescription?: string;
 };
 
 const sections = [
@@ -27,6 +35,7 @@ export function ResumeEditor({
     lockedSections = new Set(),
     onToggleLock,
     onRegenerateSection,
+    jobDescription,
 }: ResumeEditorProps) {
     const [activeSection, setActiveSection] = useState<string>("basics");
 
@@ -37,6 +46,40 @@ export function ResumeEditor({
         projects: resume.projects ?? [],
         skills: resume.skills ?? [],
         certifications: resume.certifications ?? [],
+    };
+
+    const { regenerateBullet, regenerateBullets } = useRegenerate({
+        jobDescription,
+        resumeContext: JSON.stringify(safeResume).slice(0, 2000),
+    });
+
+    // ── Bullet regeneration handlers ──────────────────────────────
+
+    const handleRegenerateBullet = async (
+        sectionType: string,
+        entryIndex: number,
+        bulletIndex: number
+    ): Promise<string | null> => {
+        let bullet = "";
+        if (sectionType === "experience") {
+            bullet = safeResume.experience[entryIndex]?.bullets?.[bulletIndex] ?? "";
+        } else if (sectionType === "projects") {
+            bullet = safeResume.projects[entryIndex]?.bullets?.[bulletIndex] ?? "";
+        }
+        if (!bullet) return null;
+        return regenerateBullet(bullet);
+    };
+
+    const handleRegenerateBullets = async (
+        sectionType: string,
+        entryIndex: number
+    ): Promise<string[] | null> => {
+        let bullets: string[] = [];
+        if (sectionType === "experience") {
+            bullets = safeResume.experience[entryIndex]?.bullets ?? [];
+        }
+        if (bullets.length === 0) return null;
+        return regenerateBullets(bullets);
     };
 
     return (
@@ -64,9 +107,22 @@ export function ResumeEditor({
                 {activeSection === "basics" && (
                     <BasicsEditor
                         basics={safeResume.basics}
-                        onChange={(basics) => onChange({ ...safeResume, basics })}
+                        onChange={(basics) =>
+                            onChange({ ...safeResume, basics })
+                        }
                         locked={lockedSections.has("basics")}
                         onToggleLock={() => onToggleLock?.("basics")}
+                        onRegenerateSummary={async () => {
+                            const summary = safeResume.basics.summary ?? "";
+                            if (!summary) return;
+                            const result = await regenerateBullet(summary);
+                            if (result) {
+                                onChange({
+                                    ...safeResume,
+                                    basics: { ...safeResume.basics, summary: result },
+                                });
+                            }
+                        }}
                     />
                 )}
 
@@ -75,9 +131,13 @@ export function ResumeEditor({
                         section="experience"
                         data={safeResume.experience}
                         onChange={(data) =>
-                            onChange({ ...safeResume, experience: data as ExperienceEntry[] })
+                            onChange({
+                                ...safeResume,
+                                experience: data as ExperienceEntry[],
+                            })
                         }
-                        onRegenerate={(i) => onRegenerateSection?.("experience", i)}
+                        onRegenerateBullet={handleRegenerateBullet}
+                        onRegenerateBullets={handleRegenerateBullets}
                         locked={lockedSections.has("experience")}
                         onToggleLock={() => onToggleLock?.("experience")}
                     />
@@ -88,7 +148,10 @@ export function ResumeEditor({
                         section="education"
                         data={safeResume.education}
                         onChange={(data) =>
-                            onChange({ ...safeResume, education: data as EducationEntry[] })
+                            onChange({
+                                ...safeResume,
+                                education: data as EducationEntry[],
+                            })
                         }
                         locked={lockedSections.has("education")}
                         onToggleLock={() => onToggleLock?.("education")}
@@ -100,9 +163,12 @@ export function ResumeEditor({
                         section="projects"
                         data={safeResume.projects}
                         onChange={(data) =>
-                            onChange({ ...safeResume, projects: data as ProjectEntry[] })
+                            onChange({
+                                ...safeResume,
+                                projects: data as ProjectEntry[],
+                            })
                         }
-                        onRegenerate={(i) => onRegenerateSection?.("projects", i)}
+                        onRegenerateBullet={handleRegenerateBullet}
                         locked={lockedSections.has("projects")}
                         onToggleLock={() => onToggleLock?.("projects")}
                     />
@@ -113,7 +179,10 @@ export function ResumeEditor({
                         section="skills"
                         data={safeResume.skills}
                         onChange={(data) =>
-                            onChange({ ...safeResume, skills: data as string[] })
+                            onChange({
+                                ...safeResume,
+                                skills: data as string[],
+                            })
                         }
                         locked={lockedSections.has("skills")}
                         onToggleLock={() => onToggleLock?.("skills")}
@@ -129,13 +198,15 @@ function BasicsEditor({
     onChange,
     locked,
     onToggleLock,
+    onRegenerateSummary,
 }: {
     basics: ResumeSchema["basics"];
     onChange: (basics: ResumeSchema["basics"]) => void;
     locked?: boolean;
     onToggleLock?: () => void;
+    onRegenerateSummary?: () => Promise<void>;
 }) {
-    const safe = basics ?? { name: "", email: "" };
+    const safe = basics ?? { name: "", email: "" } as ResumeSchema["basics"];
 
     return (
         <div className="space-y-4">
@@ -191,12 +262,25 @@ function BasicsEditor({
             </div>
 
             <div>
-                <label className="mb-1.5 block text-xs font-medium text-text-muted">
-                    Professional Summary
-                </label>
+                <div className="mb-1.5 flex items-center justify-between">
+                    <label className="text-xs font-medium text-text-muted">
+                        Professional Summary
+                    </label>
+                    {!locked && safe.summary && onRegenerateSummary && (
+                        <button
+                            onClick={onRegenerateSummary}
+                            className="flex items-center gap-1 text-[11px] text-accent/70 hover:text-accent"
+                        >
+                            <RefreshCw className="h-3 w-3" />
+                            Regenerate
+                        </button>
+                    )}
+                </div>
                 <textarea
                     value={safe.summary ?? ""}
-                    onChange={(e) => onChange({ ...safe, summary: e.target.value })}
+                    onChange={(e) =>
+                        onChange({ ...safe, summary: e.target.value })
+                    }
                     disabled={locked}
                     rows={4}
                     className="w-full resize-none rounded-lg border border-border bg-surface-elevated px-3 py-2 text-xs leading-relaxed text-text-primary placeholder:text-text-muted/50 focus:border-accent/40 focus:outline-none disabled:opacity-50"

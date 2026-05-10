@@ -36,7 +36,7 @@ export function useStreaming(callbacks: StreamingCallbacks) {
     callbacksRef.current = callbacks;
 
     const startStreaming = useCallback(
-        async (rawText: string, jobDescription: string) => {
+        async (rawText: string, jobDescription: string, tone?: string) => {
             setIsStreaming(true);
             setStage("parsing");
             setProgress(5);
@@ -48,7 +48,7 @@ export function useStreaming(callbacks: StreamingCallbacks) {
                 const response = await fetch("/api/generate", {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ rawText, jobDescription }),
+                    body: JSON.stringify({ rawText, jobDescription, tone }),
                     signal: abortRef.current.signal,
                 });
 

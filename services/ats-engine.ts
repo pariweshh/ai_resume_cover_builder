@@ -2,7 +2,13 @@ import type { ResumeSchema, JDAnalysis, ATSScore } from "@/types";
 
 export function calculateLocalATSScore(
     resume: ResumeSchema,
-    jd: JDAnalysis
+    jd: JDAnalysis, weights?: {
+        keywordMatch: number;
+        formatting: number;
+        readability: number;
+        impact: number;
+        completeness: number;
+    }
 ): ATSScore {
     const safeResume: ResumeSchema = {
         basics: resume.basics ?? { name: "", email: "" },
@@ -55,13 +61,22 @@ export function calculateLocalATSScore(
     const impact = scoreImpact(safeResume);
     const completeness = scoreCompleteness(safeResume);
 
+    const w = {
+        keywordMatch: (weights?.keywordMatch ?? 30) / 100,
+        formatting: (weights?.formatting ?? 20) / 100,
+        readability: (weights?.readability ?? 20) / 100,
+        impact: (weights?.impact ?? 15) / 100,
+        completeness: (weights?.completeness ?? 15) / 100,
+    };
+
     const overall = Math.round(
-        keywordMatch * 0.3 +
-        formatting * 0.2 +
-        readability * 0.2 +
-        impact * 0.15 +
-        completeness * 0.15
+        keywordMatch * w.keywordMatch +
+        formatting * w.formatting +
+        readability * w.readability +
+        impact * w.impact +
+        completeness * w.completeness
     );
+
 
     const warnings: string[] = [];
     const suggestions: string[] = [];

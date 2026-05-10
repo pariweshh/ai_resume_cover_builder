@@ -139,7 +139,7 @@ export function Hero() {
                 className="relative z-10 mx-auto max-w-4xl text-center"
             >
                 {/* Badge */}
-                <motion.div variants={item} className="mb-8 flex justify-center">
+                <motion.div variants={item} className=" flex justify-center">
                     <div className="group inline-flex items-center gap-2.5 rounded-full border border-white/[0.06] bg-white/[0.03] px-4 py-1.5 backdrop-blur-sm transition-all hover:border-accent/20 hover:bg-accent/[0.04]">
                         <span className="relative flex h-2 w-2">
                             <span

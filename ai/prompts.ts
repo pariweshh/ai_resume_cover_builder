@@ -236,3 +236,60 @@ SCORING:
 OUTPUT: Valid JSON matching ValidationResult schema. No commentary.`,
 
 } as const;
+
+
+export function getEnhancementPrompt(tone: string = "balanced"): string {
+    const toneInstructions: Record<string, string> = {
+        conservative:
+            "CONSERVATIVE MODE: Make minimal changes. Preserve the original wording as much as possible. Only fix clear grammar issues, replace weak verbs, and add ATS keywords where naturally supported. Do not restructure or rewrite bullets — polish only.",
+        balanced:
+            "BALANCED MODE: Improve clarity, strengthen action verbs, and restructure for readability. Rewrite bullets where they can be stronger, but preserve the candidate's voice and factual content.",
+        aggressive:
+            "AGGRESSIVE MODE: Maximum ATS optimization. Rewrite every bullet for maximum impact. Restructure sections for optimal keyword placement. Front-load achievements. Use the strongest possible action verbs. Prioritize recruiter scanning speed over preserving original phrasing.",
+    };
+
+    return `You are a professional resume writer. Enhance this resume to fill ONE FULL PAGE. Match this exact section structure:
+
+SECTIONS (in this order):
+1. PROFESSIONAL SUMMARY — 2-3 sentences establishing expertise, key technologies, and years of experience
+2. TECHNICAL SKILLS — grouped by category (each category as a separate array element using format "Category Name: skill1, skill2, skill3")
+3. PROFESSIONAL EXPERIENCE — each role with: title, company, location, dates, 3-5 bullets
+4. INDEPENDENT DEVELOPMENT & PROJECTS — each project with: name, URL (if exists), description, technologies, 2-3 bullets
+5. EDUCATION & CERTIFICATIONS — degrees and certs combined
+
+CRITICAL FOR SKILLS: Analyze the original resume's skill format carefully.
+- If the original uses categories (e.g., "Frontend & Mobile: React, TypeScript"), preserve that categorized format. Each category should be a separate array element: "Category: skill1, skill2, skill3".
+- If the original uses a flat list (e.g., ["React", "TypeScript", "Node.js"]), return a flat array of individual skill strings. Do NOT force categories.
+- If the original has no clear structure, default to categorized format with sensible groupings.
+
+Example categorized format:
+  ["Frontend & Mobile: React, React Native, Next.js, TypeScript, Tailwind CSS", "Backend & Databases: Node.js, NestJS, PostgreSQL, MongoDB", "AI & LLM: OpenAI GPT-4, Claude API, Prompt Engineering"]
+
+Example flat format:
+  ["React", "TypeScript", "Node.js", "PostgreSQL", "Docker", "AWS"]
+
+
+CONTENT RULES:
+- Summary: 2-3 sentences, no first person, include years of experience and primary domains
+- Skills: MUST be grouped into categories with labels (Frontend & Mobile, Backend & Databases, AI & LLM, DevOps & Tools)
+- Experience bullets: 10-20 words each, strong action verbs, include metrics from original
+- Project descriptions: 1 sentence overview, then bullets for specifics
+- Fill the entire page — include all meaningful content, don't cut aggressively
+
+${toneInstructions[tone] || toneInstructions.balanced}
+
+STRICT RULES:
+1. NEVER fabricate experience, companies, metrics, or technologies
+2. NEVER invent numbers, percentages, or achievements not in the original
+3. NEVER inflate seniority — if the original says "3+ years", do not call them "Senior-level"
+4. NEVER misspell technologies — "Redux" is correct, "Redox" is wrong. Preserve exact technology names from the original
+5. NEVER duplicate entries — each project, role, and education entry must appear exactly once
+6. NEVER repeat the degree field in the education entry if it's already in the degree name
+7. Classify technologies correctly: axe-core, Puppeteer, and testing tools belong in "DevOps & Tools", NOT in "AI & LLM"
+8. PRESERVE all URLs, links, and portfolio references from the original resume
+9. You MAY improve wording, strengthen action verbs, restructure bullets
+10. You MAY inject keywords ONLY if naturally supported by existing experience
+11. You MAY reorder bullets by relevance to the target role
+
+OUTPUT: Return the complete enhanced resume as valid JSON matching ResumeSchema. No commentary.`;
+}

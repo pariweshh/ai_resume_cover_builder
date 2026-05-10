@@ -9,6 +9,7 @@ import {
     Mail,
     Download,
     Settings,
+    MessageSquare,
 } from "lucide-react";
 import Link from "next/link";
 
@@ -53,7 +54,7 @@ export function Sidebar({
                         (item.id === "generate" && !hasResume) ||
                         (item.id === "ats" && !hasOptimized) ||
                         (item.id === "cover" && !hasOptimized) ||
-                        (item.id === "export" && !hasOptimized);
+                        (item.id === "export" && !hasResume);
 
                     return (
                         <button
@@ -70,10 +71,7 @@ export function Sidebar({
                             )}
                         >
                             <item.icon
-                                className={cn(
-                                    "h-4 w-4",
-                                    isActive ? "text-accent" : ""
-                                )}
+                                className={cn("h-4 w-4", isActive ? "text-accent" : "")}
                             />
                             {item.label}
                         </button>
@@ -81,8 +79,32 @@ export function Sidebar({
                 })}
             </nav>
 
-            <div className="border-t border-border p-3">
-                <button className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm text-text-muted transition-colors hover:bg-surface-hover hover:text-text-secondary">
+            <div className="border-t border-border px-3 py-3 space-y-0.5">
+                <a
+                    href="/docs"
+                    target="_blank"
+                    className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm text-text-muted transition-colors hover:bg-surface-hover hover:text-text-secondary"
+                >
+                    <FileText className="h-4 w-4" />
+                    Documentation
+                </a>
+                <a
+                    href="/support"
+                    target="_blank"
+                    className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm text-text-muted transition-colors hover:bg-surface-hover hover:text-text-secondary"
+                >
+                    <MessageSquare className="h-4 w-4" />
+                    Support
+                </a>
+                <button
+                    onClick={() => onTabChange("settings")}
+                    className={cn(
+                        "flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm transition-colors",
+                        activeTab === "settings"
+                            ? "bg-surface-elevated text-text-primary"
+                            : "text-text-muted hover:bg-surface-hover hover:text-text-secondary"
+                    )}
+                >
                     <Settings className="h-4 w-4" />
                     Settings
                 </button>

@@ -2,8 +2,9 @@
 
 import type { ResumeSchema } from "@/types";
 import { formatDate } from "@/lib/utils";
+import { parseSkills } from "@/lib/skills-utils";
 
-export async function generatePDF(resume: ResumeSchema): Promise<Blob> {
+export async function generatePDF(resume: ResumeSchema, font: string = "Calibri"): Promise<Blob> {
     const { jsPDF } = await import("jspdf");
     const doc = new jsPDF({
         orientation: "portrait",
@@ -18,8 +19,23 @@ export async function generatePDF(resume: ResumeSchema): Promise<Blob> {
     const contentWidth = pageWidth - marginLeft - marginRight;
     let y = 15;
 
+    const sectionGap = 3.5;
+    const entryGap = 2.5;
+    const bulletLineHeight = 3.8;
+
+    // Map user font to jsPDF font names
+    const fontMap: Record<string, string> = {
+        Calibri: "helvetica",
+        Georgia: "times",
+        Helvetica: "helvetica",
+        Garamond: "times",
+        Cambria: "times",
+    };
+    const docFont = fontMap[font] || "helvetica";
+
+
     // ── Name ──────────────────────────────────────────────────────
-    doc.setFont("helvetica", "bold");
+    doc.setFont(docFont, "bold");
     doc.setFontSize(20);
     doc.text(resume.basics.name.toUpperCase(), marginLeft, y);
     y += 5.5;
@@ -31,7 +47,7 @@ export async function generatePDF(resume: ResumeSchema): Promise<Blob> {
         .slice(0, 4);
     const tagline = [...titles, ...topSkills].join(" · ");
     if (tagline) {
-        doc.setFont("helvetica", "normal");
+        doc.setFont(docFont, "normal");
         doc.setFontSize(8.5);
         doc.setTextColor(80);
         const taglineLines = doc.splitTextToSize(tagline, contentWidth);
@@ -41,7 +57,7 @@ export async function generatePDF(resume: ResumeSchema): Promise<Blob> {
     }
 
     // ── Contact Line ──────────────────────────────────────────────
-    doc.setFont("helvetica", "normal");
+    doc.setFont(docFont, "normal");
     doc.setFontSize(8.5);
     const contactParts = [
         resume.basics.phone,
@@ -73,7 +89,7 @@ export async function generatePDF(resume: ResumeSchema): Promise<Blob> {
 
     const drawSectionHeader = (title: string) => {
         checkPage(12);
-        doc.setFont("helvetica", "bold");
+        doc.setFont(docFont, "bold");
         doc.setFontSize(10);
         doc.text(title, marginLeft, y);
         y += 1.5;
@@ -84,7 +100,7 @@ export async function generatePDF(resume: ResumeSchema): Promise<Blob> {
     };
 
     const drawBullet = (text: string) => {
-        doc.setFont("helvetica", "normal");
+        doc.setFont(docFont, "normal");
         doc.setFontSize(9);
         const lines = doc.splitTextToSize(text, contentWidth - 5);
         checkPage(lines.length * 3.8 + 1);
@@ -95,7 +111,7 @@ export async function generatePDF(resume: ResumeSchema): Promise<Blob> {
     // ── Professional Summary ──────────────────────────────────────
     if (resume.basics.summary) {
         drawSectionHeader("PROFESSIONAL SUMMARY");
-        doc.setFont("helvetica", "normal");
+        doc.setFont(docFont, "normal");
         doc.setFontSize(9);
         const summaryLines = doc.splitTextToSize(
             resume.basics.summary,
@@ -110,68 +126,63 @@ export async function generatePDF(resume: ResumeSchema): Promise<Blob> {
     if (resume.skills.length > 0) {
         drawSectionHeader("TECHNICAL SKILLS");
 
-        // Check if skills are categorized (contain ":")
-        const hasCategories = resume.skills.some((s) => s.includes(":"));
+        const skillData = parseSkills(resume.skills);
 
-        if (hasCategories) {
+        if (skillData.isCategorized && skillData.categories.length > 0) {
             // Render each category on its own line
-            for (const skill of resume.skills) {
-                if (skill.includes(":")) {
-                    const [category, items] = skill.split(/:(.+)/);
-                    checkPage(5);
-                    doc.setFont("helvetica", "bold");
-                    doc.setFontSize(9);
-                    doc.text(`${category.trim()}:`, marginLeft, y);
-                    const categoryWidth = doc.getTextWidth(`${category.trim()}: `);
+            for (const cat of skillData.categories) {
+                checkPage(5);
+                doc.setFont(docFont, "bold");
+                doc.setFontSize(9);
+                const label = `${cat.label}:`;
+                doc.text(label, marginLeft, y);
+                const labelWidth = doc.getTextWidth(label + " ");
 
-                    doc.setFont("helvetica", "normal");
-                    doc.setFontSize(9);
-                    const remainingWidth = contentWidth - categoryWidth;
+                doc.setFont(docFont, "normal");
+                doc.setFontSize(9);
+                const remainingWidth = contentWidth - labelWidth;
 
-                    if (remainingWidth > 30) {
-                        // First part on same line as category
-                        const firstLineText = items.trim();
-                        const firstLines = doc.splitTextToSize(firstLineText, remainingWidth);
-                        doc.text(firstLines[0], marginLeft + categoryWidth, y);
-                        y += 3.8;
-
-                        // Remaining lines indented under category
-                        if (firstLines.length > 1) {
-                            for (let i = 1; i < firstLines.length; i++) {
-                                checkPage(4);
-                                doc.text(firstLines[i], marginLeft + categoryWidth, y);
-                                y += 3.8;
-                            }
-                        }
-                    } else {
-                        // Not enough space — put items on next line
-                        y += 3.8;
-                        const itemLines = doc.splitTextToSize(items.trim(), contentWidth);
-                        doc.text(itemLines, marginLeft, y);
-                        y += itemLines.length * 3.8;
+                if (remainingWidth > 30) {
+                    const itemText = cat.items.join(", ");
+                    const lines = doc.splitTextToSize(itemText, remainingWidth);
+                    doc.text(lines[0], marginLeft + labelWidth, y);
+                    y += bulletLineHeight;
+                    for (let i = 1; i < lines.length; i++) {
+                        checkPage(4);
+                        doc.text(lines[i], marginLeft + labelWidth, y);
+                        y += bulletLineHeight;
                     }
-                    y += 1.5;
                 } else {
-                    // Standalone skill without category
-                    checkPage(4);
-                    doc.setFont("helvetica", "normal");
-                    doc.setFontSize(9);
-                    doc.text(skill, marginLeft, y);
-                    y += 3.8;
+                    y += bulletLineHeight;
+                    const lines = doc.splitTextToSize(cat.items.join(", "), contentWidth);
+                    doc.text(lines, marginLeft, y);
+                    y += lines.length * bulletLineHeight;
                 }
+                y += 1.5;
             }
-            y += 2;
+
+            // Uncategorized skills
+            if (skillData.flat.length > 0) {
+                checkPage(4);
+                doc.setFont(docFont, "normal");
+                doc.setFontSize(9);
+                const lines = doc.splitTextToSize(skillData.flat.join(", "), contentWidth);
+                doc.text(lines, marginLeft, y);
+                y += lines.length * bulletLineHeight;
+            }
         } else {
-            // Flat skills list
-            const skillText = resume.skills.join(", ");
-            doc.setFont("helvetica", "normal");
+            // Flat list — render as wrapped paragraph
+            doc.setFont(docFont, "normal");
             doc.setFontSize(9);
-            const skillLines = doc.splitTextToSize(skillText, contentWidth);
-            checkPage(skillLines.length * 3.8);
-            doc.text(skillLines, marginLeft, y);
-            y += skillLines.length * 3.8 + 4;
+            const skillText = skillData.flat.join(", ");
+            const lines = doc.splitTextToSize(skillText, contentWidth);
+            doc.text(lines, marginLeft, y);
+            y += lines.length * bulletLineHeight;
         }
+
+        y += sectionGap;
     }
+
 
 
     // ── Professional Experience ───────────────────────────────────
@@ -183,21 +194,21 @@ export async function generatePDF(resume: ResumeSchema): Promise<Blob> {
 
             // Title line: Title | Company | Location | Dates
             checkPage(12);
-            doc.setFont("helvetica", "bold");
+            doc.setFont(docFont, "bold");
             doc.setFontSize(9.5);
 
             const titleText = exp.title;
             doc.text(titleText, marginLeft, y);
 
             // Right-aligned dates
-            doc.setFont("helvetica", "normal");
+            doc.setFont(docFont, "normal");
             doc.setFontSize(8.5);
             const dateText = `${formatDate(exp.startDate)} - ${exp.current ? "Present" : formatDate(exp.endDate || "")}`;
             doc.text(dateText, pageWidth - marginRight, y, { align: "right" });
             y += 3.5;
 
             // Company line
-            doc.setFont("helvetica", "italic");
+            doc.setFont(docFont, "italic");
             doc.setFontSize(9);
             const companyParts = [exp.company, exp.location].filter(Boolean);
             doc.text(companyParts.join(" | "), marginLeft, y);
@@ -205,7 +216,7 @@ export async function generatePDF(resume: ResumeSchema): Promise<Blob> {
 
             // Technologies (if any)
             if (exp.technologies?.length) {
-                doc.setFont("helvetica", "normal");
+                doc.setFont(docFont, "normal");
                 doc.setFontSize(8);
                 doc.setTextColor(100);
                 const techText = exp.technologies.join(", ");
@@ -238,13 +249,13 @@ export async function generatePDF(resume: ResumeSchema): Promise<Blob> {
             checkPage(10);
 
             // Project name (bold)
-            doc.setFont("helvetica", "bold");
+            doc.setFont(docFont, "bold");
             doc.setFontSize(9.5);
             doc.text(proj.name, marginLeft, y);
 
             // URL on the right if available
             if (proj.url) {
-                doc.setFont("helvetica", "normal");
+                doc.setFont(docFont, "normal");
                 doc.setFontSize(8);
                 doc.setTextColor(60, 100, 200);
                 doc.text(proj.url, pageWidth - marginRight, y, { align: "right" });
@@ -254,7 +265,7 @@ export async function generatePDF(resume: ResumeSchema): Promise<Blob> {
 
             // Description
             if (proj.description) {
-                doc.setFont("helvetica", "normal");
+                doc.setFont(docFont, "normal");
                 doc.setFontSize(9);
                 const descLines = doc.splitTextToSize(proj.description, contentWidth);
                 checkPage(descLines.length * 3.8);
@@ -294,19 +305,19 @@ export async function generatePDF(resume: ResumeSchema): Promise<Blob> {
         for (const edu of resume.education) {
             checkPage(10);
 
-            doc.setFont("helvetica", "bold");
+            doc.setFont(docFont, "bold");
             doc.setFontSize(9);
             const degreeLine = [edu.degree, edu.field].filter(Boolean).join(" in ");
             doc.text(degreeLine, marginLeft, y);
 
-            doc.setFont("helvetica", "normal");
+            doc.setFont(docFont, "normal");
             doc.setFontSize(8.5);
             doc.text(edu.endDate || "", pageWidth - marginRight, y, {
                 align: "right",
             });
             y += 3.5;
 
-            doc.setFont("helvetica", "italic");
+            doc.setFont(docFont, "italic");
             doc.setFontSize(9);
             let instLine = edu.institution;
             if (edu.gpa) instLine += ` — GPA: ${edu.gpa}`;
@@ -318,7 +329,7 @@ export async function generatePDF(resume: ResumeSchema): Promise<Blob> {
         if (resume.certifications?.length) {
             for (const cert of resume.certifications) {
                 checkPage(6);
-                doc.setFont("helvetica", "normal");
+                doc.setFont(docFont, "normal");
                 doc.setFontSize(9);
                 const certParts = [cert.name, cert.issuer, cert.date]
                     .filter(Boolean)

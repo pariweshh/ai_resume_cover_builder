@@ -1,15 +1,43 @@
 "use client";
 
 import { useState } from "react";
-import { Plus, Trash2, GripVertical, RefreshCw, Lock, Unlock } from "lucide-react";
+import {
+    Plus,
+    Trash2,
+    GripVertical,
+    RefreshCw,
+    Lock,
+    Unlock,
+    Loader2,
+} from "lucide-react";
 import { cn, generateId } from "@/lib/utils";
-import type { ExperienceEntry, EducationEntry, ProjectEntry, ResumeSchema } from "@/types";
+import type {
+    ExperienceEntry,
+    EducationEntry,
+    ProjectEntry,
+    ResumeSchema,
+} from "@/types";
+import { parseSkills, skillsToFlat } from "@/lib/skills-utils";
 
 type SectionEditorProps = {
     section: keyof ResumeSchema;
     data: ExperienceEntry[] | EducationEntry[] | ProjectEntry[] | string[];
-    onChange: (data: ExperienceEntry[] | EducationEntry[] | ProjectEntry[] | string[]) => void;
-    onRegenerate?: (index: number) => void;
+    onChange: (
+        data:
+            | ExperienceEntry[]
+            | EducationEntry[]
+            | ProjectEntry[]
+            | string[]
+    ) => void;
+    onRegenerateBullet?: (
+        sectionType: string,
+        entryIndex: number,
+        bulletIndex: number
+    ) => Promise<string | null>;
+    onRegenerateBullets?: (
+        sectionType: string,
+        entryIndex: number
+    ) => Promise<string[] | null>;
     locked?: boolean;
     onToggleLock?: () => void;
 };
@@ -18,11 +46,16 @@ export function SectionEditor({
     section,
     data,
     onChange,
-    onRegenerate,
+    onRegenerateBullet,
+    onRegenerateBullets,
     locked,
     onToggleLock,
 }: SectionEditorProps) {
     const [expandedIndex, setExpandedIndex] = useState<number | null>(0);
+    const [regenerating, setRegenerating] = useState<string | null>(null);
+
+    const setRegen = (key: string | null) => setRegenerating(key);
+    const isRegen = (key: string) => regenerating === key;
 
     if (section === "skills") {
         return (
@@ -36,7 +69,9 @@ export function SectionEditor({
     }
 
     if (section === "experience") {
-        const entries = Array.isArray(data) ? (data as ExperienceEntry[]) : [];
+        const entries = Array.isArray(data)
+            ? (data as ExperienceEntry[])
+            : [];
         return (
             <div className="space-y-3">
                 <SectionHeader
@@ -72,7 +107,9 @@ export function SectionEditor({
                             location: entry.location ?? "",
                         }}
                         isExpanded={expandedIndex === i}
-                        onToggle={() => setExpandedIndex(expandedIndex === i ? null : i)}
+                        onToggle={() =>
+                            setExpandedIndex(expandedIndex === i ? null : i)
+                        }
                         onChange={(updated) => {
                             const next = [...entries];
                             next[i] = updated;
@@ -81,8 +118,40 @@ export function SectionEditor({
                         onDelete={() => {
                             onChange(entries.filter((_, idx) => idx !== i));
                         }}
-                        onRegenerate={() => onRegenerate?.(i)}
+                        onRegenerateBullet={async (bulletIndex) => {
+                            const key = `${i}-bullet-${bulletIndex}`;
+                            setRegen(key);
+                            const result = await onRegenerateBullet?.(
+                                "experience",
+                                i,
+                                bulletIndex
+                            );
+                            setRegen(null);
+                            if (result) {
+                                const next = [...entries];
+                                const bullets = [...(next[i].bullets ?? [])];
+                                bullets[bulletIndex] = result;
+                                next[i] = { ...next[i], bullets };
+                                onChange(next);
+                            }
+                        }}
+                        onRegenerateAllBullets={async () => {
+                            const key = `${i}-all`;
+                            setRegen(key);
+                            const result = await onRegenerateBullets?.(
+                                "experience",
+                                i
+                            );
+                            setRegen(null);
+                            if (result) {
+                                const next = [...entries];
+                                next[i] = { ...next[i], bullets: result };
+                                onChange(next);
+                            }
+                        }}
                         locked={locked}
+                        regenerating={regenerating}
+                        isRegen={isRegen}
                     />
                 ))}
             </div>
@@ -90,7 +159,9 @@ export function SectionEditor({
     }
 
     if (section === "education") {
-        const entries = Array.isArray(data) ? (data as EducationEntry[]) : [];
+        const entries = Array.isArray(data)
+            ? (data as EducationEntry[])
+            : [];
         return (
             <div className="space-y-3">
                 <SectionHeader
@@ -119,13 +190,17 @@ export function SectionEditor({
                             honors: entry.honors ?? [],
                         }}
                         isExpanded={expandedIndex === i}
-                        onToggle={() => setExpandedIndex(expandedIndex === i ? null : i)}
+                        onToggle={() =>
+                            setExpandedIndex(expandedIndex === i ? null : i)
+                        }
                         onChange={(updated) => {
                             const next = [...entries];
                             next[i] = updated;
                             onChange(next);
                         }}
-                        onDelete={() => onChange(entries.filter((_, idx) => idx !== i))}
+                        onDelete={() =>
+                            onChange(entries.filter((_, idx) => idx !== i))
+                        }
                         locked={locked}
                     />
                 ))}
@@ -134,7 +209,9 @@ export function SectionEditor({
     }
 
     if (section === "projects") {
-        const entries = Array.isArray(data) ? (data as ProjectEntry[]) : [];
+        const entries = Array.isArray(data)
+            ? (data as ProjectEntry[])
+            : [];
         return (
             <div className="space-y-3">
                 <SectionHeader
@@ -161,15 +238,37 @@ export function SectionEditor({
                             url: entry.url ?? "",
                         }}
                         isExpanded={expandedIndex === i}
-                        onToggle={() => setExpandedIndex(expandedIndex === i ? null : i)}
+                        onToggle={() =>
+                            setExpandedIndex(expandedIndex === i ? null : i)
+                        }
                         onChange={(updated) => {
                             const next = [...entries];
                             next[i] = updated;
                             onChange(next);
                         }}
-                        onDelete={() => onChange(entries.filter((_, idx) => idx !== i))}
-                        onRegenerate={() => onRegenerate?.(i)}
+                        onDelete={() =>
+                            onChange(entries.filter((_, idx) => idx !== i))
+                        }
+                        onRegenerateBullet={async (bulletIndex) => {
+                            const key = `proj-${i}-bullet-${bulletIndex}`;
+                            setRegen(key);
+                            const result = await onRegenerateBullet?.(
+                                "projects",
+                                i,
+                                bulletIndex
+                            );
+                            setRegen(null);
+                            if (result) {
+                                const next = [...entries];
+                                const bullets = [...(next[i].bullets ?? [])];
+                                bullets[bulletIndex] = result;
+                                next[i] = { ...next[i], bullets };
+                                onChange(next);
+                            }
+                        }}
                         locked={locked}
+                        regenerating={regenerating}
+                        isRegen={isRegen}
                     />
                 ))}
             </div>
@@ -193,7 +292,9 @@ function SectionHeader({
     return (
         <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-                <h3 className="text-sm font-semibold text-text-primary">{title}</h3>
+                <h3 className="text-sm font-semibold text-text-primary">
+                    {title}
+                </h3>
                 {onToggleLock && (
                     <button
                         onClick={onToggleLock}
@@ -227,16 +328,22 @@ function ExperienceCard({
     onToggle,
     onChange,
     onDelete,
-    onRegenerate,
+    onRegenerateBullet,
+    onRegenerateAllBullets,
     locked,
+    regenerating,
+    isRegen,
 }: {
     entry: ExperienceEntry;
     isExpanded: boolean;
     onToggle: () => void;
     onChange: (e: ExperienceEntry) => void;
     onDelete: () => void;
-    onRegenerate: () => void;
+    onRegenerateBullet: (bulletIndex: number) => Promise<void>;
+    onRegenerateAllBullets: () => Promise<void>;
     locked?: boolean;
+    regenerating: string | null;
+    isRegen: (key: string) => boolean;
 }) {
     return (
         <div className="rounded-xl border border-border bg-surface transition-colors hover:border-border/80">
@@ -251,7 +358,9 @@ function ExperienceCard({
                     </p>
                     <p className="truncate text-xs text-text-muted">
                         {entry.company || "Company"} · {entry.startDate || "Start"} –{" "}
-                        {entry.current ? "Present" : entry.endDate || "End"}
+                        {entry.current
+                            ? "Present"
+                            : entry.endDate || "End"}
                     </p>
                 </div>
             </button>
@@ -274,52 +383,97 @@ function ExperienceCard({
                         <InputField
                             label="Start Date"
                             value={entry.startDate}
-                            onChange={(v) => onChange({ ...entry, startDate: v })}
+                            onChange={(v) =>
+                                onChange({ ...entry, startDate: v })
+                            }
                             placeholder="YYYY-MM"
                             disabled={locked}
                         />
                         <InputField
                             label="End Date"
                             value={entry.endDate ?? ""}
-                            onChange={(v) => onChange({ ...entry, endDate: v })}
+                            onChange={(v) =>
+                                onChange({ ...entry, endDate: v })
+                            }
                             placeholder="YYYY-MM or Present"
                             disabled={locked}
                         />
                     </div>
 
                     <div>
-                        <label className="mb-1.5 block text-xs font-medium text-text-muted">
-                            Bullets
-                        </label>
-                        {(entry.bullets ?? []).map((bullet, bi) => (
-                            <div key={bi} className="mb-2 flex items-start gap-2">
-                                <span className="mt-2.5 text-xs text-text-muted">•</span>
-                                <textarea
-                                    value={bullet ?? ""}
-                                    onChange={(e) => {
-                                        const next = [...(entry.bullets ?? [])];
-                                        next[bi] = e.target.value;
-                                        onChange({ ...entry, bullets: next });
-                                    }}
-                                    disabled={locked}
-                                    rows={2}
-                                    className="flex-1 resize-none rounded-lg border border-border bg-surface-elevated px-3 py-2 text-xs text-text-primary placeholder:text-text-muted/50 focus:border-accent/40 focus:outline-none disabled:opacity-50"
-                                />
-                                {!locked && (
-                                    <button
-                                        onClick={() => {
-                                            const next = (entry.bullets ?? []).filter(
-                                                (_, idx) => idx !== bi
-                                            );
+                        <div className="mb-2 flex items-center justify-between">
+                            <label className="text-xs font-medium text-text-muted">
+                                Bullets
+                            </label>
+                            {!locked && (entry.bullets ?? []).length > 0 && (
+                                <button
+                                    onClick={onRegenerateAllBullets}
+                                    disabled={!!regenerating}
+                                    className="flex items-center gap-1 text-[11px] text-accent/70 hover:text-accent disabled:opacity-40"
+                                >
+                                    {isRegen(`${entry.id ?? ""}-all`) ? (
+                                        <>
+                                            <Loader2 className="h-3 w-3 animate-spin" />
+                                            Rewriting all...
+                                        </>
+                                    ) : (
+                                        <>
+                                            <RefreshCw className="h-3 w-3" />
+                                            Rewrite all bullets
+                                        </>
+                                    )}
+                                </button>
+                            )}
+                        </div>
+                        {(entry.bullets ?? []).map((bullet, bi) => {
+                            const regenKey = `${entry.id ?? ""}-bullet-${bi}`;
+                            return (
+                                <div key={bi} className="mb-2 flex items-start gap-2">
+                                    <span className="mt-2.5 text-xs text-text-muted">
+                                        •
+                                    </span>
+                                    <textarea
+                                        value={bullet ?? ""}
+                                        onChange={(e) => {
+                                            const next = [...(entry.bullets ?? [])];
+                                            next[bi] = e.target.value;
                                             onChange({ ...entry, bullets: next });
                                         }}
-                                        className="mt-2 rounded p-1 text-text-muted hover:text-error"
-                                    >
-                                        <Trash2 className="h-3 w-3" />
-                                    </button>
-                                )}
-                            </div>
-                        ))}
+                                        disabled={locked || isRegen(regenKey)}
+                                        rows={2}
+                                        className="flex-1 resize-none rounded-lg border border-border bg-surface-elevated px-3 py-2 text-xs text-text-primary placeholder:text-text-muted/50 focus:border-accent/40 focus:outline-none disabled:opacity-50"
+                                    />
+                                    {!locked && (
+                                        <div className="mt-2 flex flex-col gap-1">
+                                            <button
+                                                onClick={() => onRegenerateBullet(bi)}
+                                                disabled={!!regenerating}
+                                                title="Regenerate this bullet"
+                                                className="rounded p-1 text-text-muted transition-colors hover:text-accent disabled:opacity-40"
+                                            >
+                                                {isRegen(regenKey) ? (
+                                                    <Loader2 className="h-3 w-3 animate-spin" />
+                                                ) : (
+                                                    <RefreshCw className="h-3 w-3" />
+                                                )}
+                                            </button>
+                                            <button
+                                                onClick={() => {
+                                                    const next = (
+                                                        entry.bullets ?? []
+                                                    ).filter((_, idx) => idx !== bi);
+                                                    onChange({ ...entry, bullets: next });
+                                                }}
+                                                title="Remove this bullet"
+                                                className="rounded p-1 text-text-muted hover:text-error"
+                                            >
+                                                <Trash2 className="h-3 w-3" />
+                                            </button>
+                                        </div>
+                                    )}
+                                </div>
+                            );
+                        })}
                         {!locked && (
                             <button
                                 onClick={() =>
@@ -354,22 +508,13 @@ function ExperienceCard({
 
                     <div className="flex items-center gap-2 pt-1">
                         {!locked && (
-                            <>
-                                <button
-                                    onClick={onRegenerate}
-                                    className="flex items-center gap-1.5 rounded-lg bg-accent/10 px-3 py-1.5 text-xs font-medium text-accent transition-colors hover:bg-accent/15"
-                                >
-                                    <RefreshCw className="h-3 w-3" />
-                                    Regenerate
-                                </button>
-                                <button
-                                    onClick={onDelete}
-                                    className="flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs text-error/70 transition-colors hover:bg-error/10 hover:text-error"
-                                >
-                                    <Trash2 className="h-3 w-3" />
-                                    Remove
-                                </button>
-                            </>
+                            <button
+                                onClick={onDelete}
+                                className="flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs text-error/70 transition-colors hover:bg-error/10 hover:text-error"
+                            >
+                                <Trash2 className="h-3 w-3" />
+                                Remove
+                            </button>
                         )}
                     </div>
                 </div>
@@ -417,7 +562,9 @@ function EducationCard({
                         <InputField
                             label="Institution"
                             value={entry.institution}
-                            onChange={(v) => onChange({ ...entry, institution: v })}
+                            onChange={(v) =>
+                                onChange({ ...entry, institution: v })
+                            }
                             disabled={locked}
                         />
                         <InputField
@@ -441,14 +588,18 @@ function EducationCard({
                         <InputField
                             label="Start Date"
                             value={entry.startDate ?? ""}
-                            onChange={(v) => onChange({ ...entry, startDate: v })}
+                            onChange={(v) =>
+                                onChange({ ...entry, startDate: v })
+                            }
                             placeholder="YYYY-MM"
                             disabled={locked}
                         />
                         <InputField
                             label="End Date"
                             value={entry.endDate ?? ""}
-                            onChange={(v) => onChange({ ...entry, endDate: v })}
+                            onChange={(v) =>
+                                onChange({ ...entry, endDate: v })
+                            }
                             placeholder="YYYY-MM"
                             disabled={locked}
                         />
@@ -474,16 +625,20 @@ function ProjectCard({
     onToggle,
     onChange,
     onDelete,
-    onRegenerate,
+    onRegenerateBullet,
     locked,
+    regenerating,
+    isRegen,
 }: {
     entry: ProjectEntry;
     isExpanded: boolean;
     onToggle: () => void;
     onChange: (e: ProjectEntry) => void;
     onDelete: () => void;
-    onRegenerate: () => void;
+    onRegenerateBullet?: (bulletIndex: number) => Promise<void>;
     locked?: boolean;
+    regenerating: string | null;
+    isRegen: (key: string) => boolean;
 }) {
     return (
         <div className="rounded-xl border border-border bg-surface transition-colors hover:border-border/80">
@@ -497,7 +652,8 @@ function ProjectCard({
                         {entry.name || "Untitled Project"}
                     </p>
                     <p className="truncate text-xs text-text-muted">
-                        {(entry.technologies ?? []).join(", ") || "No technologies listed"}
+                        {(entry.technologies ?? []).join(", ") ||
+                            "No technologies listed"}
                     </p>
                 </div>
             </button>
@@ -517,7 +673,10 @@ function ProjectCard({
                         <textarea
                             value={entry.description ?? ""}
                             onChange={(e) =>
-                                onChange({ ...entry, description: e.target.value })
+                                onChange({
+                                    ...entry,
+                                    description: e.target.value,
+                                })
                             }
                             disabled={locked}
                             rows={2}
@@ -538,24 +697,96 @@ function ProjectCard({
                         }
                         disabled={locked}
                     />
+
+                    {/* Project bullets */}
+                    {(entry.bullets ?? []).length > 0 && (
+                        <div>
+                            <label className="mb-1.5 block text-xs font-medium text-text-muted">
+                                Bullets
+                            </label>
+                            {(entry.bullets ?? []).map((bullet, bi) => {
+                                const regenKey = `proj-${entry.id ?? ""}-bullet-${bi}`;
+                                return (
+                                    <div
+                                        key={bi}
+                                        className="mb-2 flex items-start gap-2"
+                                    >
+                                        <span className="mt-2.5 text-xs text-text-muted">
+                                            •
+                                        </span>
+                                        <textarea
+                                            value={bullet ?? ""}
+                                            onChange={(e) => {
+                                                const next = [...(entry.bullets ?? [])];
+                                                next[bi] = e.target.value;
+                                                onChange({ ...entry, bullets: next });
+                                            }}
+                                            disabled={locked || isRegen(regenKey)}
+                                            rows={2}
+                                            className="flex-1 resize-none rounded-lg border border-border bg-surface-elevated px-3 py-2 text-xs text-text-primary focus:border-accent/40 focus:outline-none disabled:opacity-50"
+                                        />
+                                        {!locked && (
+                                            <div className="mt-2 flex flex-col gap-1">
+                                                <button
+                                                    onClick={() =>
+                                                        onRegenerateBullet?.(bi)
+                                                    }
+                                                    disabled={!!regenerating}
+                                                    title="Regenerate this bullet"
+                                                    className="rounded p-1 text-text-muted hover:text-accent disabled:opacity-40"
+                                                >
+                                                    {isRegen(regenKey) ? (
+                                                        <Loader2 className="h-3 w-3 animate-spin" />
+                                                    ) : (
+                                                        <RefreshCw className="h-3 w-3" />
+                                                    )}
+                                                </button>
+                                                <button
+                                                    onClick={() => {
+                                                        const next = (
+                                                            entry.bullets ?? []
+                                                        ).filter((_, idx) => idx !== bi);
+                                                        onChange({
+                                                            ...entry,
+                                                            bullets: next,
+                                                        });
+                                                    }}
+                                                    title="Remove this bullet"
+                                                    className="rounded p-1 text-text-muted hover:text-error"
+                                                >
+                                                    <Trash2 className="h-3 w-3" />
+                                                </button>
+                                            </div>
+                                        )}
+                                    </div>
+                                );
+                            })}
+                            {!locked && (
+                                <button
+                                    onClick={() =>
+                                        onChange({
+                                            ...entry,
+                                            bullets: [...(entry.bullets ?? []), ""],
+                                        })
+                                    }
+                                    className="flex items-center gap-1 text-xs text-accent hover:text-accent-hover"
+                                >
+                                    <Plus className="h-3 w-3" />
+                                    Add bullet
+                                </button>
+                            )}
+                        </div>
+                    )}
+
                     <div className="flex items-center gap-2">
                         {!locked && (
-                            <>
-                                <button
-                                    onClick={onRegenerate}
-                                    className="flex items-center gap-1.5 rounded-lg bg-accent/10 px-3 py-1.5 text-xs font-medium text-accent hover:bg-accent/15"
-                                >
-                                    <RefreshCw className="h-3 w-3" />
-                                    Regenerate
-                                </button>
-                                <button
-                                    onClick={onDelete}
-                                    className="flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs text-error/70 hover:bg-error/10 hover:text-error"
-                                >
-                                    <Trash2 className="h-3 w-3" />
-                                    Remove
-                                </button>
-                            </>
+                            <button
+                                onClick={onDelete}
+                                className="flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs text-error/70 hover:bg-error/10 hover:text-error"
+                            >
+                                <Trash2 className="h-3 w-3" />
+                                Remove
+                            </button>
                         )}
                     </div>
                 </div>
@@ -577,40 +808,25 @@ function SkillsEditor({
 }) {
     const [input, setInput] = useState("");
     const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+    const [newCategoryName, setNewCategoryName] = useState("");
+    const [showNewCategory, setShowNewCategory] = useState(false);
 
     const safeSkills = Array.isArray(skills) ? skills : [];
+    const skillData = parseSkills(safeSkills);
+    const { isCategorized, categories, flat } = skillData;
 
-    // Detect if skills are categorized
-    const hasCategories = safeSkills.some((s) => s.includes(":"));
-
-    // Parse categories
-    const categories: { label: string; items: string[] }[] = [];
-    if (hasCategories) {
-        for (const skill of safeSkills) {
-            if (skill.includes(":")) {
-                const [category, items] = skill.split(/:(.+)/);
-                categories.push({
-                    label: category.trim(),
-                    items: items
-                        .split(",")
-                        .map((s) => s.trim())
-                        .filter(Boolean),
-                });
-            }
-        }
-    }
-
+    // ── Add skill ─────────────────────────────────────────────────
     const addSkill = () => {
         const trimmed = input.trim();
         if (!trimmed) return;
 
-        if (hasCategories && selectedCategory) {
-            // Add to specific category
+        if (isCategorized && selectedCategory) {
+            // Add to existing category
             const updated = safeSkills.map((s) => {
                 if (s.startsWith(selectedCategory + ":")) {
                     const existing = s.split(/:(.+)/)[1] || "";
                     const items = existing
-                        .split(",")
+                        .split(/[,·|]/)
                         .map((i) => i.trim())
                         .filter(Boolean);
                     if (!items.includes(trimmed)) {
@@ -621,13 +837,13 @@ function SkillsEditor({
                 return s;
             });
             onChange(updated);
-        } else if (hasCategories && !selectedCategory) {
-            // No category selected — add as new uncategorized
+        } else if (isCategorized && !selectedCategory) {
+            // Add as uncategorized
             if (!safeSkills.includes(trimmed)) {
                 onChange([...safeSkills, trimmed]);
             }
         } else {
-            // Flat skills — just append
+            // Flat — just append
             if (!safeSkills.includes(trimmed)) {
                 onChange([...safeSkills, trimmed]);
             }
@@ -635,24 +851,59 @@ function SkillsEditor({
         setInput("");
     };
 
+    // ── Add new category ──────────────────────────────────────────
+    const addNewCategory = () => {
+        const name = newCategoryName.trim();
+        if (!name) return;
+        if (safeSkills.some((s) => s.startsWith(name + ":"))) return;
+
+        onChange([...safeSkills, `${name}:`]);
+        setSelectedCategory(name);
+        setNewCategoryName("");
+        setShowNewCategory(false);
+    };
+
+    // ── Convert flat to categorized ───────────────────────────────
+    const convertToCategorized = () => {
+        // Create a single category with all skills
+        onChange([`General: ${safeSkills.join(", ")}`]);
+        setSelectedCategory("General");
+    };
+
+    // ── Convert categorized to flat ───────────────────────────────
+    const convertToFlat = () => {
+        const all = skillsToFlat(safeSkills);
+        onChange(all);
+        setSelectedCategory(null);
+    };
+
+    // ── Remove skill from category ────────────────────────────────
     const removeSkillFromCategory = (categoryLabel: string, skillToRemove: string) => {
         const updated = safeSkills.map((s) => {
             if (s.startsWith(categoryLabel + ":")) {
                 const items = s
                     .split(/:(.+)/)[1]
-                    ?.split(",")
+                    ?.split(/[,·|]/)
                     .map((i) => i.trim())
                     .filter((i) => i !== skillToRemove) || [];
                 return `${categoryLabel}: ${items.join(", ")}`;
             }
             return s;
         });
-        // Remove empty categories
-        onChange(updated.filter((s) => !s.endsWith(": ")));
+        onChange(updated.filter((s) => !s.endsWith(": ") && !s.endsWith(":")));
     };
 
+    // ── Remove category ───────────────────────────────────────────
     const removeCategory = (categoryLabel: string) => {
         onChange(safeSkills.filter((s) => !s.startsWith(categoryLabel + ":")));
+        if (selectedCategory === categoryLabel) {
+            setSelectedCategory(categories.length > 1 ? categories[0].label : null);
+        }
+    };
+
+    // ── Remove flat skill ─────────────────────────────────────────
+    const removeFlatSkill = (skill: string) => {
+        onChange(safeSkills.filter((s) => s !== skill));
     };
 
     return (
@@ -664,9 +915,34 @@ function SkillsEditor({
                 onAdd={() => { }}
             />
 
-            {/* Categorized Skills */}
-            {hasCategories ? (
-                <div className="mt-3 space-y-4">
+            {/* Format toggle */}
+            {!locked && (
+                <div className="mt-3 mb-3 flex items-center gap-2">
+                    <span className="text-[11px] text-text-muted">Format:</span>
+                    <button
+                        onClick={isCategorized ? convertToFlat : undefined}
+                        className={`rounded-md px-2.5 py-1 text-[11px] transition-all ${!isCategorized
+                            ? "bg-accent/15 text-accent ring-1 ring-accent/30"
+                            : "bg-surface-elevated text-text-muted hover:text-text-secondary"
+                            }`}
+                    >
+                        Flat list
+                    </button>
+                    <button
+                        onClick={!isCategorized ? convertToCategorized : undefined}
+                        className={`rounded-md px-2.5 py-1 text-[11px] transition-all ${isCategorized
+                            ? "bg-accent/15 text-accent ring-1 ring-accent/30"
+                            : "bg-surface-elevated text-text-muted hover:text-text-secondary"
+                            }`}
+                    >
+                        Categorized
+                    </button>
+                </div>
+            )}
+
+            {/* ── Categorized View ──────────────────────────────────── */}
+            {isCategorized && (
+                <div className="space-y-4">
                     {categories.map((cat) => (
                         <div key={cat.label}>
                             <div className="mb-2 flex items-center justify-between">
@@ -674,12 +950,17 @@ function SkillsEditor({
                                     {cat.label}
                                 </h4>
                                 {!locked && (
-                                    <button
-                                        onClick={() => removeCategory(cat.label)}
-                                        className="text-[10px] text-text-muted hover:text-error"
-                                    >
-                                        Remove category
-                                    </button>
+                                    <div className="flex items-center gap-2">
+                                        <span className="text-[10px] text-text-muted/50">
+                                            {cat.items.length} items
+                                        </span>
+                                        <button
+                                            onClick={() => removeCategory(cat.label)}
+                                            className="text-[10px] text-text-muted hover:text-error"
+                                        >
+                                            Remove
+                                        </button>
+                                    </div>
                                 )}
                             </div>
                             <div className="flex flex-wrap gap-1.5">
@@ -699,34 +980,48 @@ function SkillsEditor({
                                         )}
                                     </span>
                                 ))}
+                                {cat.items.length === 0 && (
+                                    <span className="text-[11px] text-text-muted/40 italic">
+                                        Empty — add skills below
+                                    </span>
+                                )}
                             </div>
                         </div>
                     ))}
 
                     {/* Uncategorized skills */}
-                    {safeSkills
-                        .filter((s) => !s.includes(":"))
-                        .map((skill) => (
-                            <span
-                                key={skill}
-                                className="inline-flex items-center gap-1 rounded-md bg-surface-elevated px-2.5 py-1 text-xs text-text-secondary"
-                            >
-                                {skill}
-                                {!locked && (
-                                    <button
-                                        onClick={() => onChange(safeSkills.filter((s) => s !== skill))}
-                                        className="ml-0.5 text-text-muted hover:text-error"
+                    {flat.length > 0 && (
+                        <div>
+                            <h4 className="mb-2 text-xs font-semibold text-text-muted/60">
+                                Uncategorized
+                            </h4>
+                            <div className="flex flex-wrap gap-1.5">
+                                {flat.map((skill) => (
+                                    <span
+                                        key={skill}
+                                        className="inline-flex items-center gap-1 rounded-md bg-surface-elevated px-2.5 py-1 text-xs text-text-secondary"
                                     >
-                                        ×
-                                    </button>
-                                )}
-                            </span>
-                        ))}
+                                        {skill}
+                                        {!locked && (
+                                            <button
+                                                onClick={() => removeFlatSkill(skill)}
+                                                className="ml-0.5 text-text-muted hover:text-error"
+                                            >
+                                                ×
+                                            </button>
+                                        )}
+                                    </span>
+                                ))}
+                            </div>
+                        </div>
+                    )}
                 </div>
-            ) : (
-                /* Flat skills */
+            )}
+
+            {/* ── Flat View ─────────────────────────────────────────── */}
+            {!isCategorized && (
                 <div className="mt-3 flex flex-wrap gap-1.5">
-                    {safeSkills.map((skill) => (
+                    {flat.map((skill) => (
                         <span
                             key={skill}
                             className="inline-flex items-center gap-1 rounded-md bg-surface-elevated px-2.5 py-1 text-xs text-text-secondary"
@@ -734,7 +1029,7 @@ function SkillsEditor({
                             {skill}
                             {!locked && (
                                 <button
-                                    onClick={() => onChange(safeSkills.filter((s) => s !== skill))}
+                                    onClick={() => removeFlatSkill(skill)}
                                     className="ml-0.5 text-text-muted hover:text-error"
                                 >
                                     ×
@@ -742,13 +1037,19 @@ function SkillsEditor({
                             )}
                         </span>
                     ))}
+                    {flat.length === 0 && (
+                        <span className="text-xs text-text-muted/40 italic">
+                            No skills added yet
+                        </span>
+                    )}
                 </div>
             )}
 
-            {/* Add skill input */}
+            {/* ── Add Skill Input ───────────────────────────────────── */}
             {!locked && (
                 <div className="mt-4 space-y-2">
-                    {hasCategories && (
+                    {/* Category selector (categorized mode) */}
+                    {isCategorized && (
                         <div className="flex flex-wrap gap-1.5">
                             {categories.map((cat) => (
                                 <button
@@ -759,8 +1060,8 @@ function SkillsEditor({
                                         )
                                     }
                                     className={`rounded-md px-2.5 py-1 text-xs transition-all ${selectedCategory === cat.label
-                                            ? "bg-accent/15 text-accent ring-1 ring-accent/30"
-                                            : "bg-surface-elevated text-text-muted hover:text-text-secondary"
+                                        ? "bg-accent/15 text-accent ring-1 ring-accent/30"
+                                        : "bg-surface-elevated text-text-muted hover:text-text-secondary"
                                         }`}
                                 >
                                     {cat.label}
@@ -769,24 +1070,50 @@ function SkillsEditor({
                             <button
                                 onClick={() => setSelectedCategory(null)}
                                 className={`rounded-md px-2.5 py-1 text-xs transition-all ${selectedCategory === null
-                                        ? "bg-accent/15 text-accent ring-1 ring-accent/30"
-                                        : "bg-surface-elevated text-text-muted hover:text-text-secondary"
+                                    ? "bg-accent/15 text-accent ring-1 ring-accent/30"
+                                    : "bg-surface-elevated text-text-muted hover:text-text-secondary"
                                     }`}
                             >
                                 Uncategorized
                             </button>
+                            <button
+                                onClick={() => setShowNewCategory(!showNewCategory)}
+                                className="rounded-md bg-surface-elevated px-2.5 py-1 text-xs text-accent/70 hover:text-accent"
+                            >
+                                + Category
+                            </button>
                         </div>
                     )}
 
+                    {/* New category input */}
+                    {showNewCategory && (
+                        <div className="flex gap-2">
+                            <input
+                                value={newCategoryName}
+                                onChange={(e) => setNewCategoryName(e.target.value)}
+                                onKeyDown={(e) => e.key === "Enter" && addNewCategory()}
+                                placeholder="Category name (e.g., Frontend, Databases)..."
+                                className="flex-1 rounded-lg border border-border bg-surface-elevated px-3 py-1.5 text-xs text-text-primary placeholder:text-text-muted/50 focus:border-accent/40 focus:outline-none"
+                            />
+                            <button
+                                onClick={addNewCategory}
+                                className="rounded-lg bg-accent/10 px-3 py-1.5 text-xs font-medium text-accent hover:bg-accent/15"
+                            >
+                                Create
+                            </button>
+                        </div>
+                    )}
+
+                    {/* Skill input */}
                     <div className="flex gap-2">
                         <input
                             value={input}
                             onChange={(e) => setInput(e.target.value)}
                             onKeyDown={(e) => e.key === "Enter" && addSkill()}
                             placeholder={
-                                hasCategories && selectedCategory
+                                isCategorized && selectedCategory
                                     ? `Add to ${selectedCategory}...`
-                                    : hasCategories
+                                    : isCategorized
                                         ? "Select a category first..."
                                         : "Add a skill..."
                             }
@@ -794,7 +1121,7 @@ function SkillsEditor({
                         />
                         <button
                             onClick={addSkill}
-                            disabled={hasCategories && !selectedCategory}
+                            disabled={isCategorized && !selectedCategory}
                             className="rounded-lg bg-accent/10 px-3 py-1.5 text-xs font-medium text-accent hover:bg-accent/15 disabled:opacity-40 disabled:cursor-not-allowed"
                         >
                             Add

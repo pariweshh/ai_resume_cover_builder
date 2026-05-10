@@ -13,8 +13,9 @@ import {
 } from "docx";
 import type { ResumeSchema } from "@/types";
 import { formatDate } from "@/lib/utils";
+import { parseSkills } from "@/lib/skills-utils";
 
-export async function generateDOCX(resume: ResumeSchema): Promise<Blob> {
+export async function generateDOCX(resume: ResumeSchema, font: string = "Calibri"): Promise<Blob> {
     const sections: Paragraph[] = [];
 
     // ── Name ──────────────────────────────────────────────────────
@@ -25,7 +26,7 @@ export async function generateDOCX(resume: ResumeSchema): Promise<Blob> {
                     text: resume.basics.name.toUpperCase(),
                     bold: true,
                     size: 40,
-                    font: "Calibri",
+                    font: font,
                 }),
             ],
             spacing: { after: 60 },
@@ -48,7 +49,7 @@ export async function generateDOCX(resume: ResumeSchema): Promise<Blob> {
                     new TextRun({
                         text: tagline,
                         size: 17,
-                        font: "Calibri",
+                        font: font,
                         color: "666666",
                     }),
                 ],
@@ -73,7 +74,7 @@ export async function generateDOCX(resume: ResumeSchema): Promise<Blob> {
                 new TextRun({
                     text: contactParts.join(" | "),
                     size: 17,
-                    font: "Calibri",
+                    font: font,
                 }),
             ],
             spacing: { after: 120 },
@@ -104,7 +105,7 @@ export async function generateDOCX(resume: ResumeSchema): Promise<Blob> {
                         text: title,
                         bold: true,
                         size: 20,
-                        font: "Calibri",
+                        font: font,
                     }),
                 ],
                 spacing: { before: 160, after: 40 },
@@ -129,7 +130,7 @@ export async function generateDOCX(resume: ResumeSchema): Promise<Blob> {
                     new TextRun({
                         text: resume.basics.summary,
                         size: 18,
-                        font: "Calibri",
+                        font: font,
                     }),
                 ],
                 spacing: { after: 100 },
@@ -141,53 +142,54 @@ export async function generateDOCX(resume: ResumeSchema): Promise<Blob> {
     if (resume.skills.length > 0) {
         addHeader("TECHNICAL SKILLS");
 
-        const hasCategories = resume.skills.some((s) => s.includes(":"));
+        const skillData = parseSkills(resume.skills);
 
-        if (hasCategories) {
-            for (const skill of resume.skills) {
-                if (skill.includes(":")) {
-                    const [category, items] = skill.split(/:(.+)/);
-                    sections.push(
-                        new Paragraph({
-                            children: [
-                                new TextRun({
-                                    text: `${category.trim()}: `,
-                                    bold: true,
-                                    size: 18,
-                                    font: "Calibri",
-                                }),
-                                new TextRun({
-                                    text: items.trim(),
-                                    size: 18,
-                                    font: "Calibri",
-                                }),
-                            ],
-                            spacing: { after: 60 },
-                        })
-                    );
-                } else {
-                    sections.push(
-                        new Paragraph({
-                            children: [
-                                new TextRun({
-                                    text: skill,
-                                    size: 18,
-                                    font: "Calibri",
-                                }),
-                            ],
-                            spacing: { after: 60 },
-                        })
-                    );
-                }
+        if (skillData.isCategorized && skillData.categories.length > 0) {
+            for (const cat of skillData.categories) {
+                sections.push(
+                    new Paragraph({
+                        children: [
+                            new TextRun({
+                                text: `${cat.label}: `,
+                                bold: true,
+                                size: 18,
+                                font: font,
+                            }),
+                            new TextRun({
+                                text: cat.items.join(", "),
+                                size: 18,
+                                font: font,
+                            }),
+                        ],
+                        spacing: { after: 60 },
+                    })
+                );
+            }
+
+            // Uncategorized
+            if (skillData.flat.length > 0) {
+                sections.push(
+                    new Paragraph({
+                        children: [
+                            new TextRun({
+                                text: skillData.flat.join(", "),
+                                size: 18,
+                                font: font,
+                            }),
+                        ],
+                        spacing: { after: 60 },
+                    })
+                );
             }
         } else {
+            // Flat list
             sections.push(
                 new Paragraph({
                     children: [
                         new TextRun({
-                            text: resume.skills.join(", "),
+                            text: skillData.flat.join(", "),
                             size: 18,
-                            font: "Calibri",
+                            font: font,
                         }),
                     ],
                     spacing: { after: 100 },
@@ -195,6 +197,7 @@ export async function generateDOCX(resume: ResumeSchema): Promise<Blob> {
             );
         }
     }
+
 
     // ── 3. Professional Experience ────────────────────────────────
     if (resume.experience.length > 0) {
@@ -211,12 +214,12 @@ export async function generateDOCX(resume: ResumeSchema): Promise<Blob> {
                             text: exp.title,
                             bold: true,
                             size: 19,
-                            font: "Calibri",
+                            font: font,
                         }),
                         new TextRun({
                             text: `\t${formatDate(exp.startDate)} - ${exp.current ? "Present" : formatDate(exp.endDate || "")}`,
                             size: 17,
-                            font: "Calibri",
+                            font: font,
                             color: "666666",
                         }),
                     ],
@@ -238,7 +241,7 @@ export async function generateDOCX(resume: ResumeSchema): Promise<Blob> {
                             text: companyLine,
                             italics: true,
                             size: 18,
-                            font: "Calibri",
+                            font: font,
                             color: "444444",
                         }),
                     ],
@@ -254,7 +257,7 @@ export async function generateDOCX(resume: ResumeSchema): Promise<Blob> {
                             new TextRun({
                                 text: exp.technologies.join(", "),
                                 size: 16,
-                                font: "Calibri",
+                                font: font,
                                 color: "888888",
                             }),
                         ],
@@ -271,7 +274,7 @@ export async function generateDOCX(resume: ResumeSchema): Promise<Blob> {
                             new TextRun({
                                 text: `• ${bullet}`,
                                 size: 18,
-                                font: "Calibri",
+                                font: font,
                             }),
                         ],
                         indent: { left: 360 },
@@ -295,7 +298,7 @@ export async function generateDOCX(resume: ResumeSchema): Promise<Blob> {
                     text: proj.name,
                     bold: true,
                     size: 19,
-                    font: "Calibri",
+                    font: font,
                 }),
             ];
 
@@ -304,7 +307,7 @@ export async function generateDOCX(resume: ResumeSchema): Promise<Blob> {
                     new TextRun({
                         text: `\t${proj.url}`,
                         size: 16,
-                        font: "Calibri",
+                        font: font,
                         color: "3366CC",
                     })
                 );
@@ -333,7 +336,7 @@ export async function generateDOCX(resume: ResumeSchema): Promise<Blob> {
                             new TextRun({
                                 text: proj.description,
                                 size: 18,
-                                font: "Calibri",
+                                font: font,
                             }),
                         ],
                         spacing: { after: 40 },
@@ -350,7 +353,7 @@ export async function generateDOCX(resume: ResumeSchema): Promise<Blob> {
                                 text: proj.technologies.join(", "),
                                 italics: true,
                                 size: 17,
-                                font: "Calibri",
+                                font: font,
                                 color: "666666",
                             }),
                         ],
@@ -368,7 +371,7 @@ export async function generateDOCX(resume: ResumeSchema): Promise<Blob> {
                                 new TextRun({
                                     text: `• ${bullet}`,
                                     size: 18,
-                                    font: "Calibri",
+                                    font: font,
                                 }),
                             ],
                             indent: { left: 360 },
@@ -397,12 +400,12 @@ export async function generateDOCX(resume: ResumeSchema): Promise<Blob> {
                             text: degreeLine,
                             bold: true,
                             size: 18,
-                            font: "Calibri",
+                            font: font,
                         }),
                         new TextRun({
                             text: `\t${edu.endDate || ""}`,
                             size: 17,
-                            font: "Calibri",
+                            font: font,
                             color: "666666",
                         }),
                     ],
@@ -424,7 +427,7 @@ export async function generateDOCX(resume: ResumeSchema): Promise<Blob> {
                             text: instText,
                             italics: true,
                             size: 18,
-                            font: "Calibri",
+                            font: font,
                             color: "444444",
                         }),
                     ],
@@ -445,7 +448,7 @@ export async function generateDOCX(resume: ResumeSchema): Promise<Blob> {
                             new TextRun({
                                 text: line,
                                 size: 18,
-                                font: "Calibri",
+                                font: font,
                             }),
                         ],
                         spacing: { after: 40 },
@@ -461,7 +464,7 @@ export async function generateDOCX(resume: ResumeSchema): Promise<Blob> {
         styles: {
             default: {
                 document: {
-                    run: { font: "Calibri", size: 18 },
+                    run: { font: font, size: 18 },
                 },
             },
         },

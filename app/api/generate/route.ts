@@ -3,7 +3,7 @@ import { runPipeline } from "@/ai/pipeline";
 export const maxDuration = 120;
 
 export async function POST(req: Request) {
-    const { rawText, jobDescription } = await req.json();
+    const { rawText, jobDescription, tone } = await req.json();
 
     if (!rawText?.trim()) {
         return new Response(
@@ -19,13 +19,11 @@ export async function POST(req: Request) {
         );
     }
 
-    console.log("[Pipeline] Starting generation");
-    console.log("[Pipeline] Resume length:", rawText.length, "chars");
-    console.log("[Pipeline] JD length:", jobDescription.length, "chars");
+    console.log("[Pipeline] Starting generation, tone:", tone || "balanced");
 
     const stream = new ReadableStream({
         async start(controller) {
-            await runPipeline(rawText, jobDescription, controller);
+            await runPipeline(rawText, jobDescription, controller, tone || "balanced");
             controller.close();
         },
     });

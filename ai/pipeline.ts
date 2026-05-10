@@ -1,4 +1,4 @@
-import { SYSTEM_PROMPTS } from "./prompts";
+import { getEnhancementPrompt, SYSTEM_PROMPTS } from "./prompts";
 import { generateJSONWithOpenAI } from "./openai";
 import { generateWithClaude, streamWithClaude } from "./claude";
 import type {
@@ -21,7 +21,8 @@ function sendEvent(
 export async function runPipeline(
     rawResumeText: string,
     jobDescription: string,
-    controller: ReadableStreamDefaultController<Uint8Array>
+    controller: ReadableStreamDefaultController<Uint8Array>,
+    tone: string = "balanced"
 ) {
     // ── Stage 1: Parse Resume ────────────────────────────────────
     try {
@@ -112,7 +113,7 @@ export async function runPipeline(
         const enhancePrompt = `Enhance this resume for the target job. Return the COMPLETE resume as valid JSON matching this structure: {basics: {name, email, phone, linkedin, github, location, summary}, experience: [{company, title, startDate, endDate, bullets: [], technologies: []}], education: [{institution, degree, field, startDate, endDate}], projects: [{name, description, technologies: [], bullets: []}], skills: []}.\n\nRULES:\n- NEVER fabricate experience, companies, metrics, or technologies\n- Only improve wording, clarity, and phrasing of existing content\n- Optimize for ATS and recruiter readability\n- Return ONLY valid JSON, no markdown\n\nORIGINAL RESUME:\n${rawResumeText}\n\nJOB ANALYSIS:\n${JSON.stringify(jdAnalysis, null, 2)}`;
 
         const enhancedRaw = await streamWithClaude(
-            SYSTEM_PROMPTS.enhancement,
+            getEnhancementPrompt(tone),
             enhancePrompt,
             (chunk) => {
                 sendEvent(controller, {

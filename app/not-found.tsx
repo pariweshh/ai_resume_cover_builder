@@ -11,12 +11,20 @@ export default function NotFound() {
                 <p className="mt-2 text-sm text-text-secondary">
                     The page you're looking for doesn't exist.
                 </p>
-                <Link
-                    href="/"
-                    className="mt-6 inline-block rounded-xl bg-accent px-6 py-2.5 text-sm font-medium text-background hover:bg-accent-hover"
-                >
-                    Go home
-                </Link>
+                <div className="mt-8 flex items-center justify-center gap-3">
+                    <Link
+                        href="/"
+                        className="rounded-xl bg-accent px-6 py-2.5 text-sm font-medium text-background hover:bg-accent-hover"
+                    >
+                        Go home
+                    </Link>
+                    <Link
+                        href="/support"
+                        className="rounded-xl border border-border px-6 py-2.5 text-sm font-medium text-text-secondary hover:bg-surface-hover hover:text-text-primary"
+                    >
+                        Contact support
+                    </Link>
+                </div>
             </div>
         </div>
     );
