@@ -40,6 +40,7 @@ type SectionEditorProps = {
     ) => Promise<string[] | null>;
     locked?: boolean;
     onToggleLock?: () => void;
+    onUpgrade?: () => void
 };
 
 export function SectionEditor({
@@ -49,7 +50,7 @@ export function SectionEditor({
     onRegenerateBullet,
     onRegenerateBullets,
     locked,
-    onToggleLock,
+    onToggleLock, onUpgrade
 }: SectionEditorProps) {
     const [expandedIndex, setExpandedIndex] = useState<number | null>(0);
     const [regenerating, setRegenerating] = useState<string | null>(null);

@@ -35,24 +35,44 @@ export default function SupportPage() {
                     <div className="space-y-4">
                         {[
                             {
-                                q: "Is my data stored permanently?",
-                                a: "Resumes are stored locally in your browser by default. If you create an account, data is stored in Supabase with row-level security. You can delete your data at any time.",
+                                q: "Do I need an account to use ResumeForge?",
+                                a: "Yes. All users must create a free account to access the platform. This allows us to securely store your workspace — your resume, job description, edits, and scores — so everything is preserved when you return on any device.",
+                            },
+                            {
+                                q: "Is my resume data stored securely?",
+                                a: "Yes. All data is stored in Supabase with row-level security. Each user can only access their own data. All connections are encrypted over HTTPS/TLS. We never share your resume data with third parties beyond the AI providers (OpenAI and Anthropic) that process it during generation.",
                             },
                             {
                                 q: "Will the AI fabricate experience on my resume?",
                                 a: "No. The platform uses a strict anti-hallucination system with evidence mapping, validation scoring, and post-processing corrections. The AI only enhances existing content — it never invents experience, metrics, or technologies.",
                             },
                             {
-                                q: "How much does each generation cost?",
-                                a: "ResumeForge runs a 7-stage pipeline using GPT-4o and Claude Sonnet. Each full generation costs approximately $0.20 in API usage. This is covered by your subscription.",
+                                q: "What does the free plan include?",
+                                a: "The free plan includes 2 resume generations per month, basic ATS scoring, and PDF export with a watermark. To unlock unlimited generations, cover letter generation, bullet regeneration, and clean PDF/DOCX export, upgrade to Pro or Lifetime.",
+                            },
+                            {
+                                q: "Can I cancel my subscription?",
+                                a: "Yes. You can cancel at any time from your account settings or the Stripe customer portal. Your Pro features remain active until the end of your current billing period. Monthly and yearly plans are non-refundable for partial periods, in accordance with Australian Consumer Law provisions for digital services.",
+                            },
+                            {
+                                q: "What is the Lifetime plan?",
+                                a: "The Lifetime plan is a one-time payment of $199 that gives you permanent access to all Pro features — unlimited generations, cover letters, bullet regeneration, clean exports, and any future Pro updates. No recurring charges.",
                             },
                             {
                                 q: "Can I edit the AI-generated resume?",
-                                a: "Yes. The editor allows inline editing of every section, individual bullet regeneration, section locking, and comparison between original and optimized versions.",
+                                a: "Yes. The editor allows inline editing of every section, individual bullet regeneration, section locking, drag-to-rearrange sections, and a live preview that updates in real time.",
                             },
                             {
                                 q: "What formats can I export to?",
-                                a: "PDF and DOCX. Both are ATS-safe — single-column layout, no graphics, no tables, clean typography that passes through applicant tracking systems.",
+                                a: "PDF and DOCX. Both are ATS-safe — single-column layout, no graphics, no tables, clean typography that passes through applicant tracking systems. You can choose from five ATS-safe fonts.",
+                            },
+                            {
+                                q: "Does my resume stay on your servers after I delete it?",
+                                a: "When you click 'Start Over' or delete your account, your workspace data is permanently removed from our database. AI providers (OpenAI and Anthropic) do not retain your data for model training, and API data is processed ephemerally.",
+                            },
+                            {
+                                q: "I have a billing issue or want a refund. What do I do?",
+                                a: "Contact us through the form above with the category 'Billing'. Under Australian Consumer Law, you may be entitled to a refund if the service is not provided as described. We assess all refund requests on a case-by-case basis.",
                             },
                         ].map((faq) => (
                             <div

@@ -6,7 +6,7 @@ const links = {
     Product: [
         { label: "Features", href: "/#features" },
         { label: "How It Works", href: "/#how-it-works" },
-        { label: "Pricing", href: "/#pricing" },
+        { label: "Pricing", href: "/pricing" },
         { label: "Changelog", href: "/docs#overview" },
     ],
     Resources: [
@@ -24,7 +24,7 @@ const links = {
 
 export function Footer() {
     return (
-        <footer className="relative border-t border-white/[0.04] px-6 pt-16 pb-10">
+        <footer className="relative border-t border-white/4 px-6 pt-16 pb-10">
             <div className="mx-auto grid max-w-6xl gap-12 sm:grid-cols-2 lg:grid-cols-4">
                 {/* Brand */}
                 <div>
@@ -73,14 +73,14 @@ export function Footer() {
                                             {item.label}
                                         </Link>
                                     ) : (
-                                        <a
+                                        <Link
                                             href={item.href}
                                             target="_blank"
                                             rel="noopener noreferrer"
                                             className="text-[13px] text-text-muted transition-colors hover:text-text-secondary"
                                         >
                                             {item.label}
-                                        </a>
+                                        </Link>
                                     )}
                                 </li>
                             ))}
@@ -89,7 +89,7 @@ export function Footer() {
                 ))}
             </div>
 
-            <div className="mx-auto mt-14 flex max-w-6xl flex-col items-center justify-between gap-4 border-t border-white/[0.04] pt-6 sm:flex-row">
+            <div className="mx-auto mt-14 flex max-w-6xl flex-col items-center justify-between gap-4 border-t border-white/4 pt-6 sm:flex-row">
                 <p className="text-xs text-text-muted/50">
                     © {new Date().getFullYear()} ResumeForge. All rights reserved.
                 </p>

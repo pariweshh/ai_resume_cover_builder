@@ -1,5 +1,7 @@
 "use client";
 
+import { useUsage } from "@/hooks/useUsage";
+import { TIERS } from "@/lib/subscription";
 import { cn } from "@/lib/utils";
 import {
     FileText,
@@ -10,6 +12,7 @@ import {
     Download,
     Settings,
     MessageSquare,
+    RotateCcw,
 } from "lucide-react";
 import Link from "next/link";
 
@@ -18,6 +21,7 @@ type SidebarProps = {
     onTabChange: (tab: string) => void;
     hasResume: boolean;
     hasOptimized: boolean;
+    onStartOver?: () => void;
 };
 
 const navItems = [
@@ -33,8 +37,10 @@ export function Sidebar({
     activeTab,
     onTabChange,
     hasResume,
-    hasOptimized,
+    hasOptimized, onStartOver
 }: SidebarProps) {
+
+    const { usage } = useUsage()
     return (
         <aside className="flex h-full w-56 flex-col border-r border-border bg-surface">
             <Link href={'/'} className="flex h-14 items-center gap-2 border-b border-border px-5">
@@ -96,18 +102,45 @@ export function Sidebar({
                     <MessageSquare className="h-4 w-4" />
                     Support
                 </a>
+
+                {usage.tier === "free" && (
+                    <div className="mx-2 mb-2 rounded-xl border border-accent/20 bg-accent/5 p-3">
+                        <p className="text-[11px] font-semibold text-accent">
+                            {usage.used}/{TIERS.free.generationsPerMonth} generations used
+                        </p>
+                        <div className="mt-1.5 h-1 overflow-hidden rounded-full bg-surface-elevated">
+                            <div
+                                className="h-full rounded-full bg-accent transition-all"
+                                style={{ width: `${Math.min(100, (usage.used / 2) * 100)}%` }}
+                            />
+                        </div>
+                        {usage.used >= 2 && (
+                            <Link
+                                href="/pricing"
+                                className="mt-2 block text-[10px] font-medium text-accent hover:underline"
+                            >
+                                Upgrade for unlimited →
+                            </Link>
+                        )}
+                    </div>
+                )}
+
                 <button
-                    onClick={() => onTabChange("settings")}
-                    className={cn(
-                        "flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm transition-colors",
-                        activeTab === "settings"
-                            ? "bg-surface-elevated text-text-primary"
-                            : "text-text-muted hover:bg-surface-hover hover:text-text-secondary"
-                    )}
+                    onClick={onStartOver}
+                    className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm text-text-muted transition-colors hover:bg-surface-hover hover:text-error"
+                >
+                    <RotateCcw className="h-4 w-4" />
+                    Start Over
+                </button>
+
+                <Link
+                    href="/settings"
+                    className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm text-text-muted transition-colors hover:bg-surface-hover hover:text-text-secondary"
                 >
                     <Settings className="h-4 w-4" />
                     Settings
-                </button>
+                </Link>
+
             </div>
         </aside>
     );

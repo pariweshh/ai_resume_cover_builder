@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
-import { ArrowRight } from "lucide-react";
+import { AuthButton } from "../shared/auth-button";
 
 export function Navbar() {
     const [scrolled, setScrolled] = useState(false);
@@ -38,25 +38,25 @@ export function Navbar() {
                 </Link>
 
                 <div className="hidden items-center gap-1 md:flex">
-                    {["Features", "How It Works"].map((item) => (
+                    {[
+                        { label: "Features", href: "/#features" },
+                        { label: "How It Works", href: "/#how-it-works" },
+                        { label: "Pricing", href: "/pricing" },
+                        { label: "Docs", href: "/docs" },
+                        { label: "Support", href: "/support" },
+                    ].map((item) => (
                         <Link
-                            key={item}
-                            href={`#${item.toLowerCase().replace(/\s+/g, "-")}`}
-                            className="rounded-lg px-4 py-2 text-sm text-text-secondary transition-colors hover:text-text-primary"
+                            key={item.label}
+                            href={item.href}
+                            className="rounded-lg px-3.5 py-2 text-sm text-text-secondary transition-colors hover:text-text-primary"
                         >
-                            {item}
+                            {item.label}
                         </Link>
                     ))}
                 </div>
 
                 <div className="flex items-center gap-3">
-                    <Link
-                        href="/dashboard"
-                        className="group relative flex items-center gap-2 rounded-xl bg-accent px-5 py-2.5 text-sm font-semibold text-background transition-all hover:bg-accent-hover hover:shadow-[0_0_30px_-6px_rgba(14,165,233,0.5)]"
-                    >
-                        Get Started
-                        <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" />
-                    </Link>
+                    <AuthButton />
                 </div>
             </nav>
         </motion.header>

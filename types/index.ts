@@ -14,6 +14,8 @@ export type ResumeSchema = {
     projects: ProjectEntry[];
     skills: string[];
     certifications?: CertificationEntry[];
+    sectionOrder?: ReorderableSection[];
+
 };
 
 export type ExperienceEntry = {
@@ -178,4 +180,34 @@ export type SavedResume = {
     coverLetter: string | null;
     createdAt: string;
     updatedAt: string;
+};
+
+export type ReorderableSection =
+    | "summary"
+    | "skills"
+    | "experience"
+    | "projects"
+    | "education";
+
+export const DEFAULT_SECTION_ORDER: ReorderableSection[] = [
+    "summary",
+    "skills",
+    "experience",
+    "projects",
+    "education",
+];
+
+export type WorkspaceState = {
+    rawText: string;
+    jobDescription: string;
+    currentResume: ResumeSchema | null;
+    optimizedResume: ResumeSchema | null;
+    atsScore: ATSScore | null;
+    coverLetter: string;
+    validation: ValidationResult | null;
+    jdAnalysis: JDAnalysis | null;
+    evidenceMapping: EvidenceMapping | null;
+    activeTab?: string;
+    lockedSections: string[];
+    startedFromScratch: boolean;
 };

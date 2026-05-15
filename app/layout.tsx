@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Toaster } from "sonner";
 import "./globals.css";
+import { AuthProvider } from "@/lib/supabase/auth-context";
 
 export const metadata: Metadata = {
   title: "ResumeForge — AI-Powered ATS Resume Optimization",
@@ -28,7 +29,9 @@ export default function RootLayout({
         />
       </head>
       <body className="font-body antialiased">
-        {children}
+        <AuthProvider>
+          {children}
+        </AuthProvider>
         <Toaster
           position="bottom-right"
           toastOptions={{
