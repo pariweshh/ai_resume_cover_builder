@@ -4,6 +4,8 @@ import { useState, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, Mail, Lock, User as UserIcon, Loader2 } from "lucide-react";
 import { useAuth } from "@/lib/supabase/auth-context";
+import { createClient } from "@/lib/supabase/client";
+import Link from "next/link";
 
 type Props = {
     isOpen: boolean;
@@ -13,8 +15,12 @@ type Props = {
 };
 
 export function AuthModal({ isOpen, onClose, defaultMode = "signin", redirectTo }: Props) {
-    const [mode, setMode] = useState(defaultMode);
-    const [email, setEmail] = useState("");
+    const supabase = createClient()
+    const [mode, setMode] = useState<"signin" | "signup" | "forgot">(
+        defaultMode
+    );
+    const [acceptedTerms, setAcceptedTerms] = useState(false);
+    const [resetSent, setResetSent] = useState(false); const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [name, setName] = useState("");
     const [error, setError] = useState<string | null>(null);
@@ -34,6 +40,26 @@ export function AuthModal({ isOpen, onClose, defaultMode = "signin", redirectTo 
         setError(null);
     }, []);
 
+    const handleResetPassword = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setError(null);
+        setIsLoading(true);
+
+        try {
+            const { error } = await supabase.auth.resetPasswordForEmail(email, {
+                redirectTo: `${window.location.origin}/auth/callback`,
+            });
+            if (error) {
+                setError(error.message);
+            } else {
+                setResetSent(true);
+            }
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setError(null);
@@ -50,6 +76,17 @@ export function AuthModal({ isOpen, onClose, defaultMode = "signin", redirectTo 
             if (err) {
                 setError(err);
             } else {
+                // send welcome email
+                if (mode === "signup") {
+                    fetch('/api/email/welcome', {
+                        method: 'POST',
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ email, name })
+                    }).catch(err => {
+                        console.error("Failed to send welcome email", err);
+                    })
+                }
+
                 reset();
                 onClose();
                 if (redirectTo) {
@@ -105,86 +142,205 @@ export function AuthModal({ isOpen, onClose, defaultMode = "signin", redirectTo 
                         </p>
                     </div>
 
-                    <button
-                        onClick={signInWithGoogle}
-                        className="flex w-full items-center justify-center gap-2 rounded-xl border border-border bg-surface-elevated py-3 text-sm font-medium text-text-primary transition-all hover:bg-surface-hover"
-                    >
-                        <GoogleIcon />
-                        Continue with Google
-                    </button>
-
-                    <div className="my-4 flex items-center gap-3">
-                        <div className="flex-1 border-t border-border" />
-                        <span className="text-[10px] text-text-muted">or</span>
-                        <div className="flex-1 border-t border-border" />
-                    </div>
-
-                    <form onSubmit={handleSubmit} className="space-y-3">
-                        {mode === "signup" && (
-                            <InputField
-                                icon={UserIcon}
-                                type="text"
-                                value={name}
-                                onChange={setName}
-                                placeholder="Full name"
-                            />
-                        )}
-                        <InputField
-                            icon={Mail}
-                            type="email"
-                            value={email}
-                            onChange={setEmail}
-                            placeholder="Email address"
-                            required
-                        />
-                        <InputField
-                            icon={Lock}
-                            type="password"
-                            value={password}
-                            onChange={setPassword}
-                            placeholder="Password (min 6 chars)"
-                            required
-                            minLength={6}
-                        />
-
-                        {error && (
-                            <p className="rounded-lg bg-error/10 px-3 py-2 text-xs text-error">
-                                {error}
+                    {/* Forgot password */}
+                    {mode === "forgot" && resetSent ? (
+                        <div className="text-center">
+                            <p className="text-sm text-text-secondary">
+                                Check your email for a password reset link.
                             </p>
-                        )}
-
-                        <button
-                            type="submit"
-                            disabled={isLoading}
-                            className="flex w-full items-center justify-center gap-2 rounded-xl bg-accent py-3 text-sm font-semibold text-background hover:bg-accent-hover disabled:opacity-50"
-                        >
-                            {isLoading ? (
-                                <Loader2 className="h-4 w-4 animate-spin" />
-                            ) : mode === "signin" ? (
-                                "Sign In"
-                            ) : (
-                                "Create Account"
-                            )}
-                        </button>
-                    </form>
-
-                    <p className="mt-4 text-center text-xs text-text-muted">
-                        {mode === "signin" ? (
-                            <>
-                                Don&apos;t have an account?{" "}
-                                <button onClick={toggle} className="text-accent hover:underline">
-                                    Sign up
+                            <button
+                                onClick={() => {
+                                    setMode("signin");
+                                    setResetSent(false);
+                                    setError(null);
+                                }}
+                                className="mt-4 text-xs text-accent hover:underline"
+                            >
+                                Back to sign in
+                            </button>
+                        </div>
+                    ) : mode === "forgot" ? (
+                        <>
+                            <p className="mb-3 text-xs text-text-secondary">
+                                Enter your email and we'll send you a reset link.
+                            </p>
+                            <form onSubmit={handleResetPassword} className="space-y-3">
+                                <InputField
+                                    icon={Mail}
+                                    type="email"
+                                    value={email}
+                                    onChange={setEmail}
+                                    placeholder="Email address"
+                                    required
+                                />
+                                {error && (
+                                    <p className="rounded-lg bg-error/10 px-3 py-2 text-xs text-error">
+                                        {error}
+                                    </p>
+                                )}
+                                <button
+                                    type="submit"
+                                    disabled={isLoading}
+                                    className="flex w-full items-center justify-center gap-2 rounded-xl bg-accent py-3 text-sm font-semibold text-background hover:bg-accent-hover disabled:opacity-50"
+                                >
+                                    {isLoading ? (
+                                        <Loader2 className="h-4 w-4 animate-spin" />
+                                    ) : (
+                                        "Send Reset Link"
+                                    )}
                                 </button>
-                            </>
-                        ) : (
-                            <>
-                                Already have an account?{" "}
-                                <button onClick={toggle} className="text-accent hover:underline">
+                            </form>
+                            <p className="mt-4 text-center text-xs text-text-muted">
+                                Remember your password?{" "}
+                                <button
+                                    onClick={() => {
+                                        setMode("signin");
+                                        setError(null);
+                                    }}
+                                    className="text-accent hover:underline"
+                                >
                                     Sign in
                                 </button>
-                            </>
-                        )}
-                    </p>
+                            </p>
+                        </>
+                    ) : (
+                        <>
+                            {/* Google */}
+                            <button
+                                onClick={signInWithGoogle}
+                                className="flex w-full items-center justify-center gap-2 rounded-xl border border-border bg-surface-elevated py-3 text-sm font-medium text-text-primary transition-all hover:bg-surface-hover"
+                            >
+                                <GoogleIcon />
+                                Continue with Google
+                            </button>
+
+                            <div className="my-4 flex items-center gap-3">
+                                <div className="flex-1 border-t border-border" />
+                                <span className="text-[10px] text-text-muted">or</span>
+                                <div className="flex-1 border-t border-border" />
+                            </div>
+
+                            {/* Form */}
+                            <form onSubmit={handleSubmit} className="space-y-3">
+                                {mode === "signup" && (
+                                    <InputField
+                                        icon={UserIcon}
+                                        type="text"
+                                        value={name}
+                                        onChange={setName}
+                                        placeholder="Full name"
+                                    />
+                                )}
+                                <InputField
+                                    icon={Mail}
+                                    type="email"
+                                    value={email}
+                                    onChange={setEmail}
+                                    placeholder="Email address"
+                                    required
+                                />
+                                <InputField
+                                    icon={Lock}
+                                    type="password"
+                                    value={password}
+                                    onChange={setPassword}
+                                    placeholder="Password (min 6 chars)"
+                                    required
+                                    minLength={6}
+                                />
+
+                                {error && (
+                                    <p className="rounded-lg bg-error/10 px-3 py-2 text-xs text-error">
+                                        {error}
+                                    </p>
+                                )}
+
+                                {mode === "signup" && (
+                                    <label className="flex items-center gap-2.5 text-xs text-text-muted">
+                                        <input
+                                            type="checkbox"
+                                            checked={acceptedTerms}
+                                            onChange={(e) => setAcceptedTerms(e.target.checked)}
+                                            className="mt-0.5 h-3.5 w-3.5 shrink-0 rounded border-border accent-accent"
+                                        />
+                                        <span className="pt-1">
+                                            I agree to the{" "}
+                                            <Link
+                                                href="/terms"
+                                                target="_blank"
+                                                className="text-accent hover:underline"
+                                            >
+                                                Terms of Service
+                                            </Link>{" "}
+                                            and{" "}
+                                            <Link
+                                                href="/privacy"
+                                                target="_blank"
+                                                className="text-accent hover:underline"
+                                            >
+                                                Privacy Policy
+                                            </Link>
+                                        </span>
+                                    </label>
+                                )}
+
+                                <button
+                                    type="submit"
+                                    disabled={isLoading || (mode === "signup" && !acceptedTerms)}
+                                    className="flex w-full items-center justify-center gap-2 rounded-xl bg-accent py-3 text-sm font-semibold text-background hover:bg-accent-hover disabled:cursor-not-allowed disabled:opacity-50"
+                                >
+                                    {isLoading ? (
+                                        <Loader2 className="h-4 w-4 animate-spin" />
+                                    ) : mode === "signin" ? (
+                                        "Sign In"
+                                    ) : (
+                                        "Create Account"
+                                    )}
+                                </button>
+                            </form>
+
+                            <p className="mt-4 text-center text-xs text-text-muted">
+                                {mode === "signin" ? (
+                                    <>
+                                        Don&apos;t have an account?{" "}
+                                        <button
+                                            onClick={() => {
+                                                setMode("signup");
+                                                setError(null);
+                                            }}
+                                            className="text-accent hover:underline"
+                                        >
+                                            Sign up
+                                        </button>
+                                        {" · "}
+                                        <button
+                                            onClick={() => {
+                                                setMode("forgot");
+                                                setError(null);
+                                            }}
+                                            className="text-accent hover:underline"
+                                        >
+                                            Forgot password?
+                                        </button>
+                                    </>
+                                ) : (
+                                    <>
+                                        Already have an account?{" "}
+                                        <button
+                                            onClick={() => {
+                                                setMode("signin");
+                                                setError(null);
+                                            }}
+                                            className="text-accent hover:underline"
+                                        >
+                                            Sign in
+                                        </button>
+                                    </>
+                                )}
+                            </p>
+                        </>
+                    )}
+
                 </motion.div>
             </motion.div>
         </AnimatePresence>

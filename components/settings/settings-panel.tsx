@@ -16,6 +16,8 @@ import {
     FileText,
     Palette,
     Shield,
+    Loader2,
+    CreditCard,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
@@ -24,6 +26,7 @@ import {
     type EnhancementTone,
     type ResumeFont,
 } from "@/hooks/useSettings";
+import { useAuth } from "@/lib/supabase/auth-context";
 
 export function SettingsPanel() {
     const {
@@ -36,6 +39,12 @@ export function SettingsPanel() {
         importData,
     } = useSettings();
 
+    const { user, profile, signOut } = useAuth();
+    const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+    const [deleteConfirmText, setDeleteConfirmText] = useState("");
+    const [isDeleting, setIsDeleting] = useState(false);
+    const [isExporting, setIsExporting] = useState(false);
+    const [isManagingSub, setIsManagingSub] = useState(false);
     const [showClearConfirm, setShowClearConfirm] = useState(false);
     const [showResetConfirm, setShowResetConfirm] = useState(false);
     const fileInputRef = useRef<HTMLInputElement>(null);
@@ -282,6 +291,191 @@ export function SettingsPanel() {
                 </div>
             </Section>
 
+            {/* ── Account ─────────────────────────────────────────────── */}
+            {user && (
+                <Section
+                    icon={Shield}
+                    title="Account"
+                    description="Manage your subscription, export data, or delete your account"
+                >
+                    {/* Subscription management */}
+                    {profile?.subscription_tier &&
+                        profile.subscription_tier !== "free" &&
+                        profile.subscription_tier !== "lifetime" && (
+                            <button
+                                onClick={async () => {
+                                    setIsManagingSub(true);
+                                    try {
+                                        const res = await fetch("/api/stripe/portal", {
+                                            method: "POST",
+                                        });
+                                        const { url } = await res.json();
+                                        if (url) window.location.href = url;
+                                    } catch {
+                                        toast.error("Failed to open subscription manager");
+                                    } finally {
+                                        setIsManagingSub(false);
+                                    }
+                                }}
+                                disabled={isManagingSub}
+                                className="group flex w-full items-center gap-3 rounded-xl border border-border bg-surface p-4 text-left transition-all hover:border-white/8 hover:bg-surface-elevated disabled:opacity-50"
+                            >
+                                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-accent/10">
+                                    <CreditCard className="h-5 w-5 text-accent" />
+                                </div>
+                                <div>
+                                    <p className="text-sm font-semibold text-text-primary">
+                                        Manage Subscription
+                                    </p>
+                                    <p className="text-xs text-text-muted">
+                                        Update payment method, view invoices, or cancel
+                                    </p>
+                                </div>
+                            </button>
+                        )}
+
+                    {/* Plan info */}
+                    <div className="flex items-center gap-3 rounded-xl border border-border bg-surface p-4">
+                        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-surface-elevated">
+                            <Shield className="h-5 w-5 text-text-muted" />
+                        </div>
+                        <div>
+                            <p className="text-sm font-semibold text-text-primary capitalize">
+                                {profile?.subscription_tier ?? "free"} Plan
+                            </p>
+                            <p className="text-xs text-text-muted">{user.email}</p>
+                        </div>
+                    </div>
+
+                    {/* Export data */}
+                    <button
+                        onClick={async () => {
+                            setIsExporting(true);
+                            try {
+                                const res = await fetch("/api/account/export");
+                                if (!res.ok) throw new Error("Export failed");
+                                const blob = await res.blob();
+                                const url = URL.createObjectURL(blob);
+                                const a = document.createElement("a");
+                                a.href = url;
+                                a.download = `resumeforge_export_${new Date().toISOString().split("T")[0]}.json`;
+                                document.body.appendChild(a);
+                                a.click();
+                                document.body.removeChild(a);
+                                URL.revokeObjectURL(url);
+                                toast.success("Data exported");
+                            } catch {
+                                toast.error("Export failed");
+                            } finally {
+                                setIsExporting(false);
+                            }
+                        }}
+                        disabled={isExporting}
+                        className="group flex w-full items-center gap-3 rounded-xl border border-border bg-surface p-4 text-left transition-all hover:border-white/8 hover:bg-surface-elevated disabled:opacity-50"
+                    >
+                        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-sky-500/10">
+                            <FileDown className="h-5 w-5 text-sky-400" />
+                        </div>
+                        <div>
+                            <p className="text-sm font-semibold text-text-primary">
+                                Export All Data
+                            </p>
+                            <p className="text-xs text-text-muted">
+                                Download your account, workspace, and generation history as JSON
+                            </p>
+                        </div>
+                    </button>
+
+                    {/* Delete account */}
+                    <button
+                        onClick={() => setShowDeleteConfirm(true)}
+                        className="group flex w-full items-center gap-3 rounded-xl border border-error/20 bg-surface p-4 text-left transition-all hover:border-error/30 hover:bg-error/5"
+                    >
+                        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-error/10">
+                            <Trash2 className="h-5 w-5 text-error" />
+                        </div>
+                        <div>
+                            <p className="text-sm font-semibold text-text-primary">
+                                Delete Account
+                            </p>
+                            <p className="text-xs text-text-muted">
+                                Permanently delete your account and all data
+                            </p>
+                        </div>
+                    </button>
+
+                    {/* Delete confirmation */}
+                    {showDeleteConfirm && (
+                        <motion.div
+                            initial={{ opacity: 0, y: 8 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            className="mt-3 space-y-3 rounded-xl border border-error/30 bg-error/5 p-4"
+                        >
+                            <div className="flex items-start gap-2">
+                                <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-error" />
+                                <div>
+                                    <p className="text-sm font-semibold text-text-primary">
+                                        This is permanent
+                                    </p>
+                                    <p className="mt-1 text-xs text-text-secondary">
+                                        This will delete your account, workspace, all resume data,
+                                        and generation history. This cannot be undone.
+                                    </p>
+                                </div>
+                            </div>
+                            <p className="text-xs text-text-muted">
+                                Type <strong>DELETE</strong> to confirm:
+                            </p>
+                            <input
+                                value={deleteConfirmText}
+                                onChange={(e) => setDeleteConfirmText(e.target.value)}
+                                placeholder="Type DELETE"
+                                className="w-full rounded-lg border border-border bg-surface-elevated px-3 py-1.5 text-xs text-text-primary placeholder:text-text-muted/50 focus:border-error/40 focus:outline-none"
+                            />
+                            <div className="flex gap-2">
+                                <button
+                                    onClick={async () => {
+                                        if (deleteConfirmText !== "DELETE") return;
+                                        setIsDeleting(true);
+                                        try {
+                                            const res = await fetch("/api/account/delete", {
+                                                method: "DELETE",
+                                            });
+                                            if (!res.ok) throw new Error("Delete failed");
+                                            toast.success("Account deleted");
+                                            await signOut();
+                                            window.location.href = "/";
+                                        } catch {
+                                            toast.error("Failed to delete account");
+                                        } finally {
+                                            setIsDeleting(false);
+                                        }
+                                    }}
+                                    disabled={deleteConfirmText !== "DELETE" || isDeleting}
+                                    className="rounded-lg bg-error px-4 py-2 text-xs font-medium text-white hover:bg-error/90 disabled:cursor-not-allowed disabled:opacity-50"
+                                >
+                                    {isDeleting ? (
+                                        <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                                    ) : (
+                                        "Delete my account"
+                                    )}
+                                </button>
+                                <button
+                                    onClick={() => {
+                                        setShowDeleteConfirm(false);
+                                        setDeleteConfirmText("");
+                                    }}
+                                    className="rounded-lg px-4 py-2 text-xs font-medium text-text-muted hover:bg-surface-hover hover:text-text-secondary"
+                                >
+                                    Cancel
+                                </button>
+                            </div>
+                        </motion.div>
+                    )}
+                </Section>
+            )}
+
+
             {/* ── Data Management ─────────────────────────────────────── */}
             <Section
                 icon={Shield}
@@ -295,7 +489,7 @@ export function SettingsPanel() {
                             exportAllData();
                             toast.success("Backup downloaded");
                         }}
-                        className="group flex items-center gap-3 rounded-xl border border-border bg-surface p-4 text-left transition-all hover:border-white/[0.08] hover:bg-surface-elevated"
+                        className="group flex items-center gap-3 rounded-xl border border-border bg-surface p-4 text-left transition-all hover:border-white/8 hover:bg-surface-elevated"
                     >
                         <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-sky-500/10">
                             <FileDown className="h-5 w-5 text-sky-400" />
@@ -313,7 +507,7 @@ export function SettingsPanel() {
                     {/* Import Backup */}
                     <button
                         onClick={() => fileInputRef.current?.click()}
-                        className="group flex items-center gap-3 rounded-xl border border-border bg-surface p-4 text-left transition-all hover:border-white/[0.08] hover:bg-surface-elevated"
+                        className="group flex items-center gap-3 rounded-xl border border-border bg-surface p-4 text-left transition-all hover:border-white/8 hover:bg-surface-elevated"
                     >
                         <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-violet-500/10">
                             <FileUp className="h-5 w-5 text-violet-400" />
@@ -338,7 +532,7 @@ export function SettingsPanel() {
                     {/* Reset Settings */}
                     <button
                         onClick={() => setShowResetConfirm(true)}
-                        className="group flex items-center gap-3 rounded-xl border border-border bg-surface p-4 text-left transition-all hover:border-white/[0.08] hover:bg-surface-elevated"
+                        className="group flex items-center gap-3 rounded-xl border border-border bg-surface p-4 text-left transition-all hover:border-white/8 hover:bg-surface-elevated"
                     >
                         <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-amber-500/10">
                             <RotateCcw className="h-5 w-5 text-amber-400" />

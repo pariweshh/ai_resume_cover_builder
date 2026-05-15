@@ -36,7 +36,7 @@ export async function POST(req: Request) {
         const tier = profile?.subscription_tier ?? "free";
         const used = profile?.generations_used_this_month ?? 0;
 
-        if (tier === "free" && used >= 2) {
+        if (tier === "free" && used >= 4) {
             return new Response(
                 JSON.stringify({
                     error: "limit_reached",

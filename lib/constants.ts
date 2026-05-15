@@ -16,7 +16,7 @@ export const PIPELINE_STAGES = {
     error: { label: "Error", progress: 0 },
 } as const;
 
-export const MAX_FILE_SIZE = 10 * 1024 * 1024;
+export const MAX_FILE_SIZE = 5 * 1024 * 1024;
 export const ACCEPTED_FILE_TYPES = {
     "application/pdf": [".pdf"],
     "application/vnd.openxmlformats-officedocument.wordprocessingml.document": [
@@ -24,6 +24,9 @@ export const ACCEPTED_FILE_TYPES = {
     ],
     "text/plain": [".txt"],
 };
+
+export const ACCEPTED_EXTENSIONS = [".pdf", ".docx", ".txt"];
+
 
 export const RESUME_SECTIONS = [
     "basics",

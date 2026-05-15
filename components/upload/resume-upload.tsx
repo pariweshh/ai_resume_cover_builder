@@ -2,15 +2,38 @@
 
 import { useCallback, useState } from "react";
 import { useDropzone } from "react-dropzone";
+import { toast } from "sonner";
 import { Upload, FileText, X, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { ACCEPTED_FILE_TYPES, MAX_FILE_SIZE } from "@/lib/constants";
+import { ACCEPTED_EXTENSIONS, ACCEPTED_FILE_TYPES, MAX_FILE_SIZE } from "@/lib/constants";
 
 type ResumeUploadProps = {
     onTextExtracted: (text: string) => void;
     onFileAccepted?: (file: File) => void;
     currentText: string;
 };
+
+
+function validateFile(file: File): string | null {
+    const ext = "." + file.name.split(".").pop()?.toLowerCase();
+
+    const extValid = ACCEPTED_EXTENSIONS.includes(ext);
+    const mimeValid = Object.keys(ACCEPTED_FILE_TYPES).includes(file.type);
+
+    if (!extValid && !mimeValid) {
+        return "Unsupported file type. Please upload a PDF, DOCX, or TXT file.";
+    }
+
+    if (file.size > MAX_FILE_SIZE) {
+        return `File is too large (${(file.size / 1024 / 1024).toFixed(1)}MB). Maximum size is ${MAX_FILE_SIZE / 1024 / 1024}MB.`;
+    }
+
+    if (file.size === 0) {
+        return "File is empty. Please upload a file with content.";
+    }
+
+    return null;
+}
 
 export function ResumeUpload({
     onTextExtracted,
@@ -21,22 +44,52 @@ export function ResumeUpload({
     const [fileName, setFileName] = useState<string | null>(null);
 
     const onDrop = useCallback(
-        async (acceptedFiles: File[]) => {
+        async (acceptedFiles: File[], rejections: any[]) => {
+            if (rejections.length > 0) {
+                const rejection = rejections[0];
+                const error = rejection.errors[0];
+                if (error?.code === "file-too-large") {
+                    toast.error(
+                        `File is too large. Maximum size is ${MAX_FILE_SIZE / 1024 / 1024}MB.`
+                    );
+                } else if (error?.code === "file-invalid-type") {
+                    toast.error(
+                        "Unsupported file type. Please upload a PDF, DOCX, or TXT file."
+                    );
+                } else {
+                    toast.error(error?.message ?? "Invalid file");
+                }
+                return;
+            }
+
             const file = acceptedFiles[0];
             if (!file) return;
+
+            const error = validateFile(file);
+            if (error) {
+                toast.error(error);
+                return;
+            }
 
             setFileName(file.name);
             setIsProcessing(true);
 
             try {
-                if (file.type === "text/plain") {
+                if (file.type === "text/plain" || file.name.endsWith(".txt")) {
                     const text = await file.text();
+                    if (!text.trim()) {
+                        toast.error("File appears to be empty");
+                        setFileName(null);
+                        return;
+                    }
                     onTextExtracted(text);
+                    toast.success("Text file loaded");
                 } else {
                     onFileAccepted?.(file);
                 }
-            } catch (err) {
-                console.error("File processing error:", err);
+            } catch {
+                toast.error("Failed to process file");
+                setFileName(null);
             } finally {
                 setIsProcessing(false);
             }
@@ -50,6 +103,8 @@ export function ResumeUpload({
         maxSize: MAX_FILE_SIZE,
         multiple: false,
     });
+
+    const sizeLabel = `${MAX_FILE_SIZE / 1024 / 1024}MB`;
 
     return (
         <div className="space-y-4">
@@ -66,7 +121,7 @@ export function ResumeUpload({
                 <input {...getInputProps()} />
                 <div className="flex flex-col items-center gap-3">
                     {isProcessing ? (
-                        <Loader2 className="h-8 w-8 text-accent animate-spin" />
+                        <Loader2 className="h-8 w-8 animate-spin text-accent" />
                     ) : fileName ? (
                         <FileText className="h-8 w-8 text-emerald" />
                     ) : (
@@ -96,7 +151,7 @@ export function ResumeUpload({
                                 <span className="text-accent">browse</span>
                             </p>
                             <p className="text-xs text-text-muted">
-                                PDF, DOCX, or TXT — max 10MB
+                                PDF, DOCX, or TXT — max {sizeLabel}
                             </p>
                         </>
                     )}
@@ -108,7 +163,9 @@ export function ResumeUpload({
                     <div className="w-full border-t border-border" />
                 </div>
                 <div className="relative flex justify-center text-xs">
-                    <span className="bg-surface px-3 text-text-muted">or paste text</span>
+                    <span className="bg-surface px-3 text-text-muted">
+                        or paste text
+                    </span>
                 </div>
             </div>
 

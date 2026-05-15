@@ -2,50 +2,46 @@ export const TIERS = {
     free: {
         name: "Free",
         price: { monthly: 0, yearly: 0 },
-        generationsPerMonth: 2,
+        generationsPerMonth: 4,
         features: [
-            "2 resume generations per month",
+            "4 resume generations per month",
             "Basic ATS score",
-            "PDF export with watermark",
-            "Local storage only",
+            "Clean PDF export",
+            "Local settings & preferences",
         ],
         limitations: [
             "No DOCX export",
-            "No cover letter",
+            "No cover letter generation",
             "No bullet regeneration",
-            "No version history",
-            "Watermarked PDF",
+            "Single enhancement tone",
         ],
     },
     pro: {
         name: "Pro",
-        price: { monthly: 12, yearly: 99 },
+        price: { monthly: 9, yearly: 79 },
         generationsPerMonth: -1,
         features: [
             "Unlimited resume generations",
             "Full ATS score with breakdown",
             "Cover letter generation",
             "Bullet regeneration",
-            "PDF + DOCX export (no watermark)",
+            "PDF + DOCX export",
             "5 resume profiles",
             "Version history",
             "All enhancement tones",
         ],
         limitations: [],
     },
-    career: {
-        name: "Career",
-        price: { monthly: 29, yearly: 249 },
+    lifetime: {
+        name: "Lifetime",
+        price: { monthly: 149, yearly: 149 },
         generationsPerMonth: -1,
         features: [
             "Everything in Pro",
-            "Unlimited resume profiles",
-            "LinkedIn profile optimization",
-            "Interview prep questions",
-            "Priority AI processing",
-            "Unlimited version history",
-            "API access",
-            "Priority support",
+            "Pay once, use forever",
+            "No recurring charges",
+            "All future Pro updates included",
+            "Priority email support",
         ],
         limitations: [],
     },
@@ -54,12 +50,9 @@ export const TIERS = {
 export type Tier = keyof typeof TIERS;
 
 export const FEATURE_GATES: Record<string, Tier[]> = {
-    cover_letter: ["pro", "career"],
-    regenerate: ["pro", "career"],
-    docx_export: ["pro", "career"],
-    multiple_profiles: ["career"],
-    interview_prep: ["career"],
-    api_access: ["career"],
+    cover_letter: ["pro", "lifetime"],
+    regenerate: ["pro", "lifetime"],
+    docx_export: ["pro", "lifetime"],
 };
 
 export function canUseFeature(tier: Tier, feature: string): boolean {
@@ -77,8 +70,7 @@ export function getTierFromPriceId(priceId: string): Tier {
     const map: Record<string, Tier> = {
         [process.env.STRIPE_PRO_MONTHLY_PRICE_ID!]: "pro",
         [process.env.STRIPE_PRO_YEARLY_PRICE_ID!]: "pro",
-        [process.env.STRIPE_CAREER_MONTHLY_PRICE_ID!]: "career",
-        [process.env.STRIPE_CAREER_YEARLY_PRICE_ID!]: "career",
+        [process.env.STRIPE_LIFETIME_PRICE_ID!]: "lifetime",
     };
     return map[priceId] || "free";
 }
