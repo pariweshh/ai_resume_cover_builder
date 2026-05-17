@@ -9,8 +9,7 @@ export function useWorkspacePersistence(userId: string | null) {
     const [isSaving, setIsSaving] = useState(false);
     const [initialState, setInitialState] = useState<WorkspaceState | null>(null);
 
-    const supabaseRef = useRef(createClient());
-    const supabase = supabaseRef.current;
+    const [supabase] = useState(() => createClient());
     const saveTimeoutRef = useRef<ReturnType<typeof setTimeout>>(undefined);
     const lastSavedRef = useRef<string>("");
 

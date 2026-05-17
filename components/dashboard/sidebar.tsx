@@ -42,15 +42,14 @@ export function Sidebar({
 
     const { usage } = useUsage()
     return (
-        <aside className="flex h-full w-56 flex-col border-r border-border bg-surface">
-            <Link href={'/'} className="flex h-14 items-center gap-2 border-b border-border px-5">
-                <div className="flex h-6 w-6 items-center justify-center rounded-md bg-accent/10">
-                    <span className="text-xs font-bold text-accent">R</span>
-                </div>
-                <span className="font-display text-base text-text-primary">
-                    ResumeForge
-                </span>
-            </Link>
+        <aside className="flex h-full w-full flex-col border-r border-border bg-surface lg:w-56">            <Link href={'/'} className="flex h-14 items-center gap-2 border-b border-border px-5">
+            <div className="flex h-6 w-6 items-center justify-center rounded-md bg-accent/10">
+                <span className="text-xs font-bold text-accent">R</span>
+            </div>
+            <span className="font-display text-base text-text-primary">
+                ResumeForge
+            </span>
+        </Link>
 
             <nav className="flex-1 space-y-0.5 px-3 py-4">
                 {navItems.map((item) => {
@@ -125,7 +124,7 @@ export function Sidebar({
                     </div>
                 )}
 
-                <button
+                <button title="Clear all data and start fresh"
                     onClick={onStartOver}
                     className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm text-text-muted transition-colors hover:bg-surface-hover hover:text-error"
                 >

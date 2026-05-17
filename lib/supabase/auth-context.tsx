@@ -41,7 +41,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const [user, setUser] = useState<User | null>(null);
     const [profile, setProfile] = useState<Profile | null>(null);
     const [isLoading, setIsLoading] = useState(true);
-    const supabase = createClient();
+    const [supabase] = useState(() => createClient());
 
     const fetchProfile = useCallback(
         async (uid: string) => {

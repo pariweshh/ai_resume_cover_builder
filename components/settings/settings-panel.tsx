@@ -81,10 +81,13 @@ export function SettingsPanel() {
     );
 
     return (
-        <div className="mx-auto max-w-3xl space-y-10 p-8">
+        // 1. Responsive padding and vertical spacing
+        <div className="mx-auto max-w-3xl space-y-6 p-4 sm:space-y-10 sm:p-6 lg:p-8">
             {/* Header */}
             <div>
-                <h2 className="font-display text-2xl text-text-primary">Settings</h2>
+                <h2 className="font-display text-xl text-text-primary sm:text-2xl">
+                    Settings
+                </h2>
                 <p className="mt-2 text-sm text-text-secondary">
                     Customize your resume generation and export preferences. All settings
                     are stored locally in your browser.
@@ -99,13 +102,14 @@ export function SettingsPanel() {
             >
                 {/* Export Format */}
                 <SettingRow label="Default Export Format">
+                    {/* 2. Tighter padding on mobile */}
                     <div className="flex gap-2">
                         {(["pdf", "docx", "both"] as ExportFormat[]).map((format) => (
                             <button
                                 key={format}
                                 onClick={() => updateSetting("exportFormat", format)}
                                 className={cn(
-                                    "rounded-lg px-4 py-2 text-xs font-medium transition-all",
+                                    "rounded-lg px-3 py-1.5 text-xs font-medium transition-all sm:px-4 sm:py-2",
                                     settings.exportFormat === format
                                         ? "bg-accent/15 text-accent ring-1 ring-accent/30"
                                         : "bg-surface-elevated text-text-muted hover:text-text-secondary"
@@ -133,7 +137,7 @@ export function SettingsPanel() {
                                 key={font}
                                 onClick={() => updateSetting("resumeFont", font)}
                                 className={cn(
-                                    "rounded-lg px-4 py-2 text-xs font-medium transition-all",
+                                    "rounded-lg px-3 py-1.5 text-xs font-medium transition-all sm:px-4 sm:py-2",
                                     settings.resumeFont === font
                                         ? "bg-accent/15 text-accent ring-1 ring-accent/30"
                                         : "bg-surface-elevated text-text-muted hover:text-text-secondary"
@@ -163,8 +167,9 @@ export function SettingsPanel() {
                 description="Control how the AI enhances your resume"
             >
                 {/* Enhancement Tone */}
+                {/* 3. Stack vertically on mobile, 3-col on sm+ */}
                 <SettingRow label="Enhancement Tone">
-                    <div className="flex gap-2">
+                    <div className="grid gap-2 sm:grid-cols-3">
                         {(
                             [
                                 {
@@ -189,7 +194,7 @@ export function SettingsPanel() {
                                         updateSetting("enhancementTone", option.value)
                                     }
                                     className={cn(
-                                        "flex-1 rounded-lg px-3 py-3 text-center transition-all",
+                                        "rounded-lg px-3 py-3 text-center transition-all",
                                         settings.enhancementTone === option.value
                                             ? "bg-accent/15 ring-1 ring-accent/30"
                                             : "bg-surface-elevated hover:bg-surface-hover"
@@ -216,17 +221,18 @@ export function SettingsPanel() {
 
                 {/* Auto-save */}
                 <SettingRow label="Auto-save">
+                    {/* 4. Larger toggle for better touch target */}
                     <button
                         onClick={() => updateSetting("autoSave", !settings.autoSave)}
                         className={cn(
-                            "relative h-6 w-11 rounded-full transition-colors",
+                            "relative h-7 w-12 rounded-full transition-colors",
                             settings.autoSave ? "bg-accent" : "bg-surface-elevated"
                         )}
                     >
                         <span
                             className={cn(
-                                "absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform",
-                                settings.autoSave ? "left-[22px]" : "left-0.5"
+                                "absolute top-[3px] h-[22px] w-[22px] rounded-full bg-white shadow transition-transform",
+                                settings.autoSave ? "left-[25px]" : "left-[3px]"
                             )}
                         />
                     </button>
@@ -255,6 +261,7 @@ export function SettingsPanel() {
                 ).map((item) => (
                     <SettingRow key={item.key} label={item.label}>
                         <div className="flex items-center gap-3">
+                            {/* 5. Range takes available space, capped */}
                             <input
                                 type="range"
                                 min={0}
@@ -263,9 +270,9 @@ export function SettingsPanel() {
                                 onChange={(e) =>
                                     updateATSWeight(item.key, parseInt(e.target.value))
                                 }
-                                className="h-1.5 w-32 appearance-none rounded-full bg-surface-elevated accent-accent"
+                                className="h-1.5 w-full max-w-32 appearance-none rounded-full bg-surface-elevated accent-accent"
                             />
-                            <span className="w-8 text-right font-mono text-xs text-text-secondary">
+                            <span className="w-8 shrink-0 text-right font-mono text-xs text-text-secondary">
                                 {settings.atsWeights[item.key]}%
                             </span>
                         </div>
@@ -282,9 +289,9 @@ export function SettingsPanel() {
                     )}
                 >
                     {totalWeight === 100 ? (
-                        <Check className="h-3.5 w-3.5" />
+                        <Check className="h-3.5 w-3.5 shrink-0" />
                     ) : (
-                        <AlertTriangle className="h-3.5 w-3.5" />
+                        <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
                     )}
                     Total: {totalWeight}%{" "}
                     {totalWeight !== 100 && "— weights should sum to 100%"}
@@ -318,12 +325,12 @@ export function SettingsPanel() {
                                     }
                                 }}
                                 disabled={isManagingSub}
-                                className="group flex w-full items-center gap-3 rounded-xl border border-border bg-surface p-4 text-left transition-all hover:border-white/8 hover:bg-surface-elevated disabled:opacity-50"
+                                className="group flex w-full items-center gap-3 rounded-xl border border-border bg-surface p-3 text-left transition-all hover:border-white/8 hover:bg-surface-elevated disabled:opacity-50 sm:p-4"
                             >
-                                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-accent/10">
+                                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-accent/10">
                                     <CreditCard className="h-5 w-5 text-accent" />
                                 </div>
-                                <div>
+                                <div className="min-w-0">
                                     <p className="text-sm font-semibold text-text-primary">
                                         Manage Subscription
                                     </p>
@@ -335,15 +342,18 @@ export function SettingsPanel() {
                         )}
 
                     {/* Plan info */}
-                    <div className="flex items-center gap-3 rounded-xl border border-border bg-surface p-4">
-                        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-surface-elevated">
+                    <div className="flex items-center gap-3 rounded-xl border border-border bg-surface p-3 sm:p-4">
+                        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-surface-elevated">
                             <Shield className="h-5 w-5 text-text-muted" />
                         </div>
-                        <div>
+                        <div className="min-w-0">
                             <p className="text-sm font-semibold text-text-primary capitalize">
                                 {profile?.subscription_tier ?? "free"} Plan
                             </p>
-                            <p className="text-xs text-text-muted">{user.email}</p>
+                            {/* truncate long emails on mobile */}
+                            <p className="truncate text-xs text-text-muted">
+                                {user.email}
+                            </p>
                         </div>
                     </div>
 
@@ -371,12 +381,12 @@ export function SettingsPanel() {
                             }
                         }}
                         disabled={isExporting}
-                        className="group flex w-full items-center gap-3 rounded-xl border border-border bg-surface p-4 text-left transition-all hover:border-white/8 hover:bg-surface-elevated disabled:opacity-50"
+                        className="group flex w-full items-center gap-3 rounded-xl border border-border bg-surface p-3 text-left transition-all hover:border-white/8 hover:bg-surface-elevated disabled:opacity-50 sm:p-4"
                     >
-                        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-sky-500/10">
+                        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-sky-500/10">
                             <FileDown className="h-5 w-5 text-sky-400" />
                         </div>
-                        <div>
+                        <div className="min-w-0">
                             <p className="text-sm font-semibold text-text-primary">
                                 Export All Data
                             </p>
@@ -389,12 +399,12 @@ export function SettingsPanel() {
                     {/* Delete account */}
                     <button
                         onClick={() => setShowDeleteConfirm(true)}
-                        className="group flex w-full items-center gap-3 rounded-xl border border-error/20 bg-surface p-4 text-left transition-all hover:border-error/30 hover:bg-error/5"
+                        className="group flex w-full items-center gap-3 rounded-xl border border-error/20 bg-surface p-3 text-left transition-all hover:border-error/30 hover:bg-error/5 sm:p-4"
                     >
-                        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-error/10">
+                        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-error/10">
                             <Trash2 className="h-5 w-5 text-error" />
                         </div>
-                        <div>
+                        <div className="min-w-0">
                             <p className="text-sm font-semibold text-text-primary">
                                 Delete Account
                             </p>
@@ -409,7 +419,7 @@ export function SettingsPanel() {
                         <motion.div
                             initial={{ opacity: 0, y: 8 }}
                             animate={{ opacity: 1, y: 0 }}
-                            className="mt-3 space-y-3 rounded-xl border border-error/30 bg-error/5 p-4"
+                            className="mt-3 space-y-3 rounded-xl border border-error/30 bg-error/5 p-3 sm:p-4"
                         >
                             <div className="flex items-start gap-2">
                                 <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-error" />
@@ -430,7 +440,7 @@ export function SettingsPanel() {
                                 value={deleteConfirmText}
                                 onChange={(e) => setDeleteConfirmText(e.target.value)}
                                 placeholder="Type DELETE"
-                                className="w-full rounded-lg border border-border bg-surface-elevated px-3 py-1.5 text-xs text-text-primary placeholder:text-text-muted/50 focus:border-error/40 focus:outline-none"
+                                className="w-full rounded-lg border border-border bg-surface-elevated px-3 py-2 text-xs text-text-primary placeholder:text-text-muted/50 focus:border-error/40 focus:outline-none"
                             />
                             <div className="flex gap-2">
                                 <button
@@ -452,7 +462,7 @@ export function SettingsPanel() {
                                         }
                                     }}
                                     disabled={deleteConfirmText !== "DELETE" || isDeleting}
-                                    className="rounded-lg bg-error px-4 py-2 text-xs font-medium text-white hover:bg-error/90 disabled:cursor-not-allowed disabled:opacity-50"
+                                    className="flex items-center gap-1.5 rounded-lg bg-error px-4 py-2 text-xs font-medium text-white hover:bg-error/90 disabled:cursor-not-allowed disabled:opacity-50"
                                 >
                                     {isDeleting ? (
                                         <Loader2 className="h-3.5 w-3.5 animate-spin" />
@@ -475,26 +485,25 @@ export function SettingsPanel() {
                 </Section>
             )}
 
-
             {/* ── Data Management ─────────────────────────────────────── */}
             <Section
                 icon={Shield}
                 title="Data Management"
                 description="Backup, restore, or clear your local data"
             >
-                <div className="grid gap-3 sm:grid-cols-2">
+                <div className="grid gap-2 sm:grid-cols-2 sm:gap-3">
                     {/* Export Backup */}
                     <button
                         onClick={() => {
                             exportAllData();
                             toast.success("Backup downloaded");
                         }}
-                        className="group flex items-center gap-3 rounded-xl border border-border bg-surface p-4 text-left transition-all hover:border-white/8 hover:bg-surface-elevated"
+                        className="group flex items-center gap-3 rounded-xl border border-border bg-surface p-3 text-left transition-all hover:border-white/8 hover:bg-surface-elevated sm:p-4"
                     >
-                        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-sky-500/10">
+                        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-sky-500/10">
                             <FileDown className="h-5 w-5 text-sky-400" />
                         </div>
-                        <div>
+                        <div className="min-w-0">
                             <p className="text-sm font-semibold text-text-primary">
                                 Export Backup
                             </p>
@@ -507,12 +516,12 @@ export function SettingsPanel() {
                     {/* Import Backup */}
                     <button
                         onClick={() => fileInputRef.current?.click()}
-                        className="group flex items-center gap-3 rounded-xl border border-border bg-surface p-4 text-left transition-all hover:border-white/8 hover:bg-surface-elevated"
+                        className="group flex items-center gap-3 rounded-xl border border-border bg-surface p-3 text-left transition-all hover:border-white/8 hover:bg-surface-elevated sm:p-4"
                     >
-                        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-violet-500/10">
+                        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-violet-500/10">
                             <FileUp className="h-5 w-5 text-violet-400" />
                         </div>
-                        <div>
+                        <div className="min-w-0">
                             <p className="text-sm font-semibold text-text-primary">
                                 Import Backup
                             </p>
@@ -532,12 +541,12 @@ export function SettingsPanel() {
                     {/* Reset Settings */}
                     <button
                         onClick={() => setShowResetConfirm(true)}
-                        className="group flex items-center gap-3 rounded-xl border border-border bg-surface p-4 text-left transition-all hover:border-white/8 hover:bg-surface-elevated"
+                        className="group flex items-center gap-3 rounded-xl border border-border bg-surface p-3 text-left transition-all hover:border-white/8 hover:bg-surface-elevated sm:p-4"
                     >
-                        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-amber-500/10">
+                        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-amber-500/10">
                             <RotateCcw className="h-5 w-5 text-amber-400" />
                         </div>
-                        <div>
+                        <div className="min-w-0">
                             <p className="text-sm font-semibold text-text-primary">
                                 Reset Settings
                             </p>
@@ -550,12 +559,12 @@ export function SettingsPanel() {
                     {/* Clear All Data */}
                     <button
                         onClick={() => setShowClearConfirm(true)}
-                        className="group flex items-center gap-3 rounded-xl border border-error/20 bg-surface p-4 text-left transition-all hover:border-error/30 hover:bg-error/5"
+                        className="group flex items-center gap-3 rounded-xl border border-error/20 bg-surface p-3 text-left transition-all hover:border-error/30 hover:bg-error/5 sm:p-4"
                     >
-                        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-error/10">
+                        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-error/10">
                             <Trash2 className="h-5 w-5 text-error" />
                         </div>
-                        <div>
+                        <div className="min-w-0">
                             <p className="text-sm font-semibold text-text-primary">
                                 Clear All Data
                             </p>
@@ -613,15 +622,17 @@ function Section({
     return (
         <div className="space-y-4">
             <div className="flex items-center gap-3">
-                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-accent/10">
+                {/* 6. shrink-0 on icon container */}
+                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-accent/10">
                     <Icon className="h-4 w-4 text-accent" />
                 </div>
-                <div>
+                <div className="min-w-0">
                     <h3 className="text-sm font-semibold text-text-primary">{title}</h3>
                     <p className="text-xs text-text-muted">{description}</p>
                 </div>
             </div>
-            <div className="space-y-4 rounded-xl border border-border bg-surface p-5">
+            {/* 7. Tighter padding on mobile */}
+            <div className="space-y-4 rounded-xl border border-border bg-surface p-3 sm:p-5">
                 {children}
             </div>
         </div>
@@ -664,7 +675,7 @@ function ConfirmDialog({
         <motion.div
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
-            className="mt-3 rounded-xl border border-border bg-surface-elevated p-4"
+            className="mt-3 rounded-xl border border-border bg-surface-elevated p-3 sm:p-4"
         >
             <p className="text-sm font-semibold text-text-primary">{title}</p>
             <p className="mt-1 text-xs text-text-secondary">{message}</p>
@@ -721,9 +732,10 @@ function StorageInfo() {
     const percent = Math.min(100, (usage.used / (maxKB * 1024)) * 100);
 
     return (
-        <div className="rounded-xl border border-border bg-surface p-5">
-            <div className="flex items-center justify-between">
-                <div>
+        <div className="rounded-xl border border-border bg-surface p-3 sm:p-5">
+            {/* 8. Wrap-friendly layout for small screens */}
+            <div className="flex flex-wrap items-center justify-between gap-2">
+                <div className="min-w-0">
                     <h4 className="text-xs font-semibold text-text-muted">
                         Local Storage Usage
                     </h4>

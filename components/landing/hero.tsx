@@ -146,7 +146,7 @@ export function Hero() {
                 >
                     {/* Badge */}
                     <motion.div variants={item} className=" flex justify-center">
-                        <div className="group inline-flex items-center gap-2.5 rounded-full border border-white/6 bg-white/3 px-4 py-1.5 backdrop-blur-sm transition-all hover:border-accent/20 hover:bg-accent/[0.04]">
+                        <div className="group inline-flex items-center gap-2.5 rounded-full border border-white/6 bg-white/3 px-4 py-1.5 backdrop-blur-sm transition-all hover:border-accent/20 hover:bg-accent/4">
                             <span className="relative flex h-2 w-2">
                                 <span
                                     className="absolute inline-flex h-full w-full rounded-full bg-emerald opacity-75"
@@ -232,7 +232,7 @@ export function Hero() {
 
                         <Link
                             href="#how-it-works"
-                            className="rounded-2xl border border-white/8 bg-white/2 px-8 py-4 text-sm font-medium text-text-secondary backdrop-blur-sm transition-all hover:border-white/[0.15] hover:bg-white/[0.04] hover:text-text-primary"
+                            className="rounded-2xl border border-white/8 bg-white/2 px-8 py-4 text-sm font-medium text-text-secondary backdrop-blur-sm transition-all hover:border-white/15 hover:bg-white/4 hover:text-text-primary"
                         >
                             See How It Works
                         </Link>
@@ -250,7 +250,7 @@ export function Hero() {
                         ].map((stat) => (
                             <div
                                 key={stat.label}
-                                className="group rounded-2xl border border-white/[0.04] bg-white/[0.015] p-4 transition-all hover:border-white/[0.08] hover:bg-white/[0.03]"
+                                className="group rounded-2xl border border-white/4 bg-white/1.5 p-4 transition-all hover:border-white/8 hover:bg-white/3"
                             >
                                 <stat.icon className="mx-auto mb-2.5 h-4 w-4 text-accent/50 transition-colors group-hover:text-accent/80" />
                                 <div className="font-display text-2xl text-text-primary sm:text-3xl">

@@ -111,7 +111,7 @@ export function ResumeUpload({
             <div
                 {...getRootProps()}
                 className={cn(
-                    "group relative cursor-pointer rounded-xl border-2 border-dashed p-8 text-center transition-all",
+                    "group relative cursor-pointer rounded-xl border-2 border-dashed p-6 text-center transition-all sm:p-8",
                     isDragActive
                         ? "border-accent bg-accent/5"
                         : "border-border hover:border-text-muted/30 hover:bg-surface-hover",

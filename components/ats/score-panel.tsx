@@ -7,6 +7,7 @@ import {
     CheckCircle2,
     XCircle,
     Lightbulb,
+    BarChart3,
 } from "lucide-react";
 import { cn, getScoreColor, getScoreBg } from "@/lib/utils";
 import type { ATSScore } from "@/types";
@@ -32,10 +33,23 @@ export function ScorePanel({ score }: ScorePanelProps) {
     const warnings = score.warnings ?? [];
     const suggestions = score.suggestions ?? [];
 
+    {
+        !score && (
+            <div className="rounded-xl border border-dashed border-border p-8 text-center">
+                <BarChart3 className="mx-auto mb-3 h-8 w-8 text-text-muted/30" />
+                <p className="text-sm font-medium text-text-muted/60">No score yet</p>
+                <p className="mt-1 text-xs text-text-muted/40">
+                    Generate your optimized resume to see ATS scoring
+                </p>
+            </div>
+        )
+    }
+
+
     return (
         <div className="space-y-6">
             {/* Overall Score */}
-            <div className="rounded-xl border border-border bg-surface p-6 text-center">
+            <div className="rounded-xl border border-border bg-surface p-4 sm:p-6 text-center">
                 <p className="mb-2 text-xs font-medium uppercase tracking-wider text-text-muted">
                     ATS Match Score
                 </p>
@@ -43,7 +57,7 @@ export function ScorePanel({ score }: ScorePanelProps) {
                     initial={{ scale: 0.8, opacity: 0 }}
                     animate={{ scale: 1, opacity: 1 }}
                     transition={{ type: "spring", stiffness: 200 }}
-                    className={cn("font-display text-6xl", getScoreColor(overall))}
+                    className={cn("font-display text-5xl sm:text-6xl", getScoreColor(overall))}
                 >
                     {overall}
                 </motion.div>
@@ -58,7 +72,7 @@ export function ScorePanel({ score }: ScorePanelProps) {
             </div>
 
             {/* Breakdown */}
-            <div className="rounded-xl border border-border bg-surface p-5">
+            <div className="rounded-xl border border-border bg-surface p-4 sm:p-5">
                 <h4 className="mb-4 flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-text-muted">
                     <TrendingUp className="h-3.5 w-3.5" />
                     Score Breakdown
@@ -87,7 +101,7 @@ export function ScorePanel({ score }: ScorePanelProps) {
 
             {/* Matched Keywords */}
             {matchedKeywords.length > 0 && (
-                <div className="rounded-xl border border-border bg-surface p-5">
+                <div className="rounded-xl border border-border bg-surface p-4 sm:p-5">
                     <h4 className="mb-3 flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-text-muted">
                         <CheckCircle2 className="h-3.5 w-3.5 text-emerald" />
                         Matched Keywords ({matchedKeywords.length})
@@ -107,7 +121,7 @@ export function ScorePanel({ score }: ScorePanelProps) {
 
             {/* Missing Keywords */}
             {missingKeywords.length > 0 && (
-                <div className="rounded-xl border border-border bg-surface p-5">
+                <div className="rounded-xl border border-border bg-surface p-4 sm:p-5">
                     <h4 className="mb-3 flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-text-muted">
                         <XCircle className="h-3.5 w-3.5 text-error" />
                         Missing Keywords ({missingKeywords.length})
@@ -127,7 +141,7 @@ export function ScorePanel({ score }: ScorePanelProps) {
 
             {/* Warnings */}
             {warnings.length > 0 && (
-                <div className="rounded-xl border border-warning/20 bg-warning/5 p-5">
+                <div className="rounded-xl border border-warning/20 bg-warning/5 p-4 sm:p-5">
                     <h4 className="mb-3 flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-warning">
                         <AlertTriangle className="h-3.5 w-3.5" />
                         Warnings
@@ -144,7 +158,7 @@ export function ScorePanel({ score }: ScorePanelProps) {
 
             {/* Suggestions */}
             {suggestions.length > 0 && (
-                <div className="rounded-xl border border-accent/20 bg-accent/5 p-5">
+                <div className="rounded-xl border border-accent/20 bg-accent/5 p-4 sm:p-5">
                     <h4 className="mb-3 flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-accent">
                         <Lightbulb className="h-3.5 w-3.5" />
                         Suggestions

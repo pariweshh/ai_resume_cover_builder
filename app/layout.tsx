@@ -4,9 +4,25 @@ import "./globals.css";
 import { AuthProvider } from "@/lib/supabase/auth-context";
 
 export const metadata: Metadata = {
-  title: "ResumeForge — AI-Powered ATS Resume Optimization",
-  description:
-    "Premium ATS optimization platform. AI-enhanced resumes that recruiters trust. No hallucinations, no fluff.",
+  title: "ResumeForge — AI-Powered Resume Optimization",
+  description: "Transform your resume with AI-powered optimization. 7-stage pipeline with anti-hallucination, ATS scoring, and ATS-safe PDF/DOCX export.",
+  keywords: ["resume", "AI resume", "ATS optimization", "cover letter", "job application", "resume builder"],
+  icons: {
+    icon: "/icon.svg",
+    apple: "/apple-touch-icon.png",
+  },
+  openGraph: {
+    title: "ResumeForge — AI-Powered Resume Optimization",
+    description: "Transform your resume with a 7-stage AI pipeline. Anti-hallucination enforcement, ATS scoring, and ATS-safe export.",
+    url: process.env.NEXT_PUBLIC_APP_URL ?? "https://resumeforge.com",
+    siteName: "ResumeForge",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "ResumeForge — AI-Powered Resume Optimization",
+    description: "Transform your resume with a 7-stage AI pipeline. Anti-hallucination enforcement, ATS scoring, and ATS-safe export.",
+  },
 };
 
 export default function RootLayout({

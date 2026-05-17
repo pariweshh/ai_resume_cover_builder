@@ -83,19 +83,23 @@ export function ExportModal({
         }
     };
 
-
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center">
+        // 1. Bottom-sheet on mobile (items-end), centered on sm+
+        <div className="fixed inset-0 z-50 flex items-end justify-center sm:items-center">
             <div
                 className="absolute inset-0 bg-black/60 backdrop-blur-sm"
                 onClick={onClose}
             />
-            <div className="relative w-full max-w-md rounded-2xl border border-border bg-surface p-6 shadow-2xl">
+            {/* 2. max-h for overflow safety, rounded-t on mobile (flat bottom),
+                   overflow-y-auto so content scrolls if it ever exceeds viewport */}
+            <div className="relative w-full max-w-md rounded-t-2xl border border-border bg-surface p-4 shadow-2xl sm:rounded-2xl sm:p-6">
                 <div className="flex items-center justify-between">
                     <h3 className="text-lg font-semibold text-text-primary">Export</h3>
+                    {/* 3. Explicit 44×44 touch target via min-h/min-w + grid centering
+                           instead of bare p-1 which was only 28px */}
                     <button
                         onClick={onClose}
-                        className="rounded-lg p-1 text-text-muted hover:text-text-primary"
+                        className="grid min-h-[44px] min-w-[44px] place-items-center rounded-lg text-text-muted hover:text-text-primary"
                     >
                         <X className="h-5 w-5" />
                     </button>
@@ -106,16 +110,18 @@ export function ExportModal({
                     typography.
                 </p>
 
-                <div className="mt-6 space-y-3">
+                <div className="mt-5 space-y-2 sm:mt-6 sm:space-y-3">
                     <button
                         onClick={() => handleExport("pdf")}
                         disabled={!!isExporting}
-                        className="flex w-full items-center gap-4 rounded-xl border border-border bg-surface-elevated p-4 text-left transition-all hover:border-accent/30 hover:bg-surface-hover disabled:opacity-50"
+                        // 4. Tighter gap + padding on mobile
+                        className="flex w-full items-center gap-3 rounded-xl border border-border bg-surface-elevated p-3 text-left transition-all hover:border-accent/30 hover:bg-surface-hover disabled:opacity-50 sm:gap-4 sm:p-4"
                     >
-                        <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-error/10">
+                        {/* 5. shrink-0 on icon containers */}
+                        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-error/10">
                             <FileText className="h-5 w-5 text-error" />
                         </div>
-                        <div className="flex-1">
+                        <div className="min-w-0 flex-1">
                             <p className="text-sm font-medium text-text-primary">
                                 Resume as PDF
                             </p>
@@ -124,19 +130,19 @@ export function ExportModal({
                             </p>
                         </div>
                         {isExporting === "pdf" && (
-                            <Loader2 className="h-4 w-4 animate-spin text-accent" />
+                            <Loader2 className="h-4 w-4 shrink-0 animate-spin text-accent" />
                         )}
                     </button>
 
                     <button
                         onClick={() => handleExport("docx")}
                         disabled={!!isExporting}
-                        className="flex w-full items-center gap-4 rounded-xl border border-border bg-surface-elevated p-4 text-left transition-all hover:border-accent/30 hover:bg-surface-hover disabled:opacity-50"
+                        className="flex w-full items-center gap-3 rounded-xl border border-border bg-surface-elevated p-3 text-left transition-all hover:border-accent/30 hover:bg-surface-hover disabled:opacity-50 sm:gap-4 sm:p-4"
                     >
-                        <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-accent/10">
+                        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-accent/10">
                             <File className="h-5 w-5 text-accent" />
                         </div>
-                        <div className="flex-1">
+                        <div className="min-w-0 flex-1">
                             <p className="text-sm font-medium text-text-primary">
                                 Resume as DOCX
                             </p>
@@ -145,7 +151,7 @@ export function ExportModal({
                             </p>
                         </div>
                         {isExporting === "docx" && (
-                            <Loader2 className="h-4 w-4 animate-spin text-accent" />
+                            <Loader2 className="h-4 w-4 shrink-0 animate-spin text-accent" />
                         )}
                     </button>
 
@@ -153,19 +159,19 @@ export function ExportModal({
                         <button
                             onClick={handleExportCoverLetter}
                             disabled={!!isExporting}
-                            className="flex w-full items-center gap-4 rounded-xl border border-border bg-surface-elevated p-4 text-left transition-all hover:border-accent/30 hover:bg-surface-hover disabled:opacity-50"
+                            className="flex w-full items-center gap-3 rounded-xl border border-border bg-surface-elevated p-3 text-left transition-all hover:border-accent/30 hover:bg-surface-hover disabled:opacity-50 sm:gap-4 sm:p-4"
                         >
-                            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-emerald/10">
+                            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-emerald/10">
                                 <FileText className="h-5 w-5 text-emerald" />
                             </div>
-                            <div className="flex-1">
+                            <div className="min-w-0 flex-1">
                                 <p className="text-sm font-medium text-text-primary">
                                     Cover Letter as PDF
                                 </p>
                                 <p className="text-xs text-text-muted">Clean, printable format</p>
                             </div>
                             {isExporting === "cover-pdf" && (
-                                <Loader2 className="h-4 w-4 animate-spin text-accent" />
+                                <Loader2 className="h-4 w-4 shrink-0 animate-spin text-accent" />
                             )}
                         </button>
                     )}

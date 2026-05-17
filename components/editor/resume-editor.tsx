@@ -9,6 +9,10 @@ import {
     Lock,
     Unlock,
     Loader2,
+    Briefcase,
+    GraduationCap,
+    FolderGit2,
+    Wrench,
 } from "lucide-react";
 import { cn, generateId } from "@/lib/utils";
 import { useRegenerate } from "@/hooks/useRegenerate";
@@ -60,6 +64,26 @@ const SECTION_LABELS: Record<ReorderableSection, string> = {
     projects: "Projects",
     education: "Education",
 };
+
+// ── Empty State ────────────────────────────────────────────────
+
+function EmptyState({
+    icon: Icon,
+    title,
+    description,
+}: {
+    icon: React.ElementType;
+    title: string;
+    description: string;
+}) {
+    return (
+        <div className="rounded-xl border border-dashed border-border p-6 sm:p-8 text-center">
+            <Icon className="mx-auto mb-3 h-7 w-7 sm:h-8 sm:w-8 text-text-muted/30" />
+            <p className="text-xs sm:text-sm font-medium text-text-muted/60">{title}</p>
+            <p className="mt-1 text-[11px] sm:text-xs text-text-muted/40">{description}</p>
+        </div>
+    );
+}
 
 // ── Main Component ─────────────────────────────────────────────
 
@@ -127,13 +151,13 @@ export function ResumeEditor({
     const allowRegenerate = canUseFeature(tier, "regenerate");
 
     return (
-        <div className="flex h-full flex-col">
+        <div className="flex h-full flex-col min-h-0">
             {/* ── Section tabs ─────────────────────────────────────── */}
-            <div className="flex gap-1 overflow-x-auto border-b border-border px-4 py-2">
+            <div className="flex gap-1 overflow-x-auto border-b border-border px-3 sm:px-4 py-2 scrollbar-none">
                 <button
                     onClick={() => setActiveSection("basics")}
                     className={cn(
-                        "shrink-0 rounded-lg px-3 py-1.5 text-xs font-medium transition-all",
+                        "shrink-0 rounded-lg px-2.5 sm:px-3 py-1.5 text-[11px] sm:text-xs font-medium transition-all min-h-[32px]",
                         activeSection === "basics"
                             ? "bg-surface-elevated text-text-primary"
                             : "text-text-muted hover:text-text-secondary"
@@ -146,7 +170,7 @@ export function ResumeEditor({
                         key={sectionId}
                         onClick={() => setActiveSection(sectionId)}
                         className={cn(
-                            "shrink-0 rounded-lg px-3 py-1.5 text-xs font-medium transition-all",
+                            "shrink-0 rounded-lg px-2.5 sm:px-3 py-1.5 text-[11px] sm:text-xs font-medium transition-all min-h-[32px]",
                             activeSection === sectionId
                                 ? "bg-surface-elevated text-text-primary"
                                 : "text-text-muted hover:text-text-secondary"
@@ -158,7 +182,7 @@ export function ResumeEditor({
             </div>
 
             {/* ── Section content ──────────────────────────────────── */}
-            <div className="flex-1 overflow-y-auto p-4">
+            <div className="flex-1 overflow-y-auto p-3 sm:p-4 min-h-0">
                 {activeSection === "basics" && (
                     <BasicsEditor
                         basics={safeResume.basics}
@@ -276,12 +300,13 @@ function BasicsEditor({
     return (
         <div className="space-y-4">
             <div className="flex items-center justify-between">
-                <h3 className="text-sm font-semibold text-text-primary">
+                <h3 className="text-xs sm:text-sm font-semibold text-text-primary">
                     Contact Information
                 </h3>
                 <button
                     onClick={onToggleLock}
-                    className="rounded p-1 text-text-muted hover:text-text-secondary"
+                    title={locked ? "Unlock section" : "Lock section"}
+                    className="rounded p-1.5 text-text-muted hover:text-text-secondary min-w-[32px] min-h-[32px] flex items-center justify-center"
                 >
                     {locked ? (
                         <Lock className="h-3.5 w-3.5" />
@@ -291,7 +316,7 @@ function BasicsEditor({
                 </button>
             </div>
 
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <Field
                     label="Full Name"
                     value={safe.name ?? ""}
@@ -332,16 +357,17 @@ function BasicsEditor({
 
             <div>
                 <div className="mb-1.5 flex items-center justify-between">
-                    <label className="text-xs font-medium text-text-muted">
+                    <label className="text-[11px] sm:text-xs font-medium text-text-muted">
                         Professional Summary
                     </label>
                     {!locked && safe.summary && onRegenerateSummary && (
                         <button
                             onClick={onRegenerateSummary}
-                            className="flex items-center gap-1 text-[11px] text-accent/70 hover:text-accent"
+                            title="Regenerate summary with AI"
+                            className="flex items-center gap-1 text-[11px] text-accent/70 hover:text-accent min-h-[32px]"
                         >
                             <RefreshCw className="h-3 w-3" />
-                            Regenerate
+                            <span className="hidden sm:inline">Regenerate</span>
                         </button>
                     )}
                 </div>
@@ -411,6 +437,13 @@ function SectionEditor({
                         setExpandedIndex(entries.length);
                     }}
                 />
+                {entries.length === 0 && (
+                    <EmptyState
+                        icon={Briefcase}
+                        title="No experience added yet"
+                        description='Click "Add" above to get started'
+                    />
+                )}
                 {entries.map((entry, i) => (
                     <ExperienceCard
                         key={entry.id ?? i}
@@ -500,6 +533,13 @@ function SectionEditor({
                         setExpandedIndex(entries.length);
                     }}
                 />
+                {entries.length === 0 && (
+                    <EmptyState
+                        icon={GraduationCap}
+                        title="No education added yet"
+                        description='Click "Add" above to add your qualifications'
+                    />
+                )}
                 {entries.map((entry, i) => (
                     <EducationCard
                         key={entry.id ?? i}
@@ -550,6 +590,13 @@ function SectionEditor({
                         setExpandedIndex(entries.length);
                     }}
                 />
+                {entries.length === 0 && (
+                    <EmptyState
+                        icon={FolderGit2}
+                        title="No projects added yet"
+                        description='Click "Add" above to showcase your work'
+                    />
+                )}
                 {entries.map((entry, i) => (
                     <ProjectCard
                         key={entry.id ?? i}
@@ -622,13 +669,13 @@ function SectionHeader({
     return (
         <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-                <h3 className="text-sm font-semibold text-text-primary">
+                <h3 className="text-xs sm:text-sm font-semibold text-text-primary">
                     {title}
                 </h3>
                 {onToggleLock && (
                     <button
                         onClick={onToggleLock}
-                        className="rounded p-1 text-text-muted transition-colors hover:text-text-secondary"
+                        className="rounded p-1.5 text-text-muted transition-colors hover:text-text-secondary min-w-[32px] min-h-[32px] flex items-center justify-center"
                         title={locked ? "Unlock section" : "Lock section"}
                     >
                         {locked ? (
@@ -642,7 +689,8 @@ function SectionHeader({
             {!locked && (
                 <button
                     onClick={onAdd}
-                    className="flex items-center gap-1 rounded-md px-2 py-1 text-xs text-text-muted transition-colors hover:bg-surface-hover hover:text-text-secondary"
+                    title={`Add to ${title.toLowerCase()}`}
+                    className="flex items-center gap-1 rounded-md px-2.5 py-1.5 text-xs text-text-muted transition-colors hover:bg-surface-hover hover:text-text-secondary min-h-[32px]"
                 >
                     <Plus className="h-3 w-3" />
                     Add
@@ -681,23 +729,38 @@ function ExperienceCard({
         <div className="rounded-xl border border-border bg-surface transition-colors hover:border-border/80">
             <button
                 onClick={onToggle}
-                className="flex w-full items-center gap-3 px-4 py-3 text-left"
+                title={isExpanded ? "Collapse" : "Expand"}
+                className="flex w-full items-center gap-2 sm:gap-3 px-3 sm:px-4 py-3 text-left"
             >
-                <GripVertical className="h-4 w-4 text-text-muted/30" />
+                <GripVertical className="hidden sm:block h-4 w-4 text-text-muted/30 shrink-0" />
                 <div className="min-w-0 flex-1">
-                    <p className="truncate text-sm font-medium text-text-primary">
+                    <p className="truncate text-xs sm:text-sm font-medium text-text-primary">
                         {entry.title || "Untitled Role"}
                     </p>
-                    <p className="truncate text-xs text-text-muted">
+                    <p className="truncate text-[11px] sm:text-xs text-text-muted">
                         {entry.company || "Company"} · {entry.startDate || "Start"} –{" "}
                         {entry.current ? "Present" : entry.endDate || "End"}
                     </p>
                 </div>
+                <div className="shrink-0">
+                    <svg
+                        className={cn(
+                            "h-4 w-4 text-text-muted transition-transform",
+                            isExpanded && "rotate-180"
+                        )}
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                        strokeWidth={2}
+                    >
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+                    </svg>
+                </div>
             </button>
 
             {isExpanded && (
-                <div className="space-y-3 border-t border-border px-4 pb-4 pt-3">
-                    <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-3 border-t border-border px-3 sm:px-4 pb-4 pt-3">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         <Field
                             label="Title"
                             value={entry.title}
@@ -727,25 +790,28 @@ function ExperienceCard({
                     </div>
 
                     <div>
-                        <div className="mb-2 flex items-center justify-between">
-                            <label className="text-xs font-medium text-text-muted">
+                        <div className="mb-2 flex items-center justify-between gap-2">
+                            <label className="text-[11px] sm:text-xs font-medium text-text-muted">
                                 Bullets
                             </label>
                             {!locked && (entry.bullets ?? []).length > 0 && (
                                 <button
                                     onClick={onRegenerateAllBullets}
                                     disabled={!!regenerating}
-                                    className="flex items-center gap-1 text-[11px] text-accent/70 hover:text-accent disabled:opacity-40"
+                                    title="Rewrite all bullet points with AI"
+                                    className="flex items-center gap-1 text-[11px] text-accent/70 hover:text-accent disabled:opacity-40 min-h-[32px] shrink-0"
                                 >
                                     {isRegen(`${entry.id ?? ""}-all`) ? (
                                         <>
                                             <Loader2 className="h-3 w-3 animate-spin" />
-                                            Rewriting all...
+                                            <span className="hidden sm:inline">Rewriting all...</span>
+                                            <span className="sm:hidden">...</span>
                                         </>
                                     ) : (
                                         <>
                                             <RefreshCw className="h-3 w-3" />
-                                            Rewrite all bullets
+                                            <span className="hidden sm:inline">Rewrite all bullets</span>
+                                            <span className="sm:hidden">Rewrite all</span>
                                         </>
                                     )}
                                 </button>
@@ -755,7 +821,7 @@ function ExperienceCard({
                             const regenKey = `${entry.id ?? ""}-bullet-${bi}`;
                             return (
                                 <div key={bi} className="mb-2 flex items-start gap-2">
-                                    <span className="mt-2.5 text-xs text-text-muted">
+                                    <span className="mt-2.5 shrink-0 text-xs text-text-muted">
                                         •
                                     </span>
                                     <textarea
@@ -767,15 +833,15 @@ function ExperienceCard({
                                         }}
                                         disabled={locked || isRegen(regenKey)}
                                         rows={2}
-                                        className="flex-1 resize-none rounded-lg border border-border bg-surface-elevated px-3 py-2 text-xs text-text-primary placeholder:text-text-muted/50 focus:border-accent/40 focus:outline-none disabled:opacity-50"
+                                        className="flex-1 min-w-0 resize-none rounded-lg border border-border bg-surface-elevated px-3 py-2 text-xs text-text-primary placeholder:text-text-muted/50 focus:border-accent/40 focus:outline-none disabled:opacity-50"
                                     />
                                     {!locked && (
-                                        <div className="mt-2 flex flex-col gap-1">
+                                        <div className="mt-1.5 sm:mt-2 flex flex-row sm:flex-col gap-1 shrink-0">
                                             <button
                                                 onClick={() => onRegenerateBullet(bi)}
                                                 disabled={!!regenerating}
                                                 title="Regenerate this bullet"
-                                                className="rounded p-1 text-text-muted transition-colors hover:text-accent disabled:opacity-40"
+                                                className="rounded p-1.5 text-text-muted transition-colors hover:text-accent disabled:opacity-40 min-w-[32px] min-h-[32px] flex items-center justify-center"
                                             >
                                                 {isRegen(regenKey) ? (
                                                     <Loader2 className="h-3 w-3 animate-spin" />
@@ -791,7 +857,7 @@ function ExperienceCard({
                                                     onChange({ ...entry, bullets: next });
                                                 }}
                                                 title="Remove this bullet"
-                                                className="rounded p-1 text-text-muted hover:text-error"
+                                                className="rounded p-1.5 text-text-muted hover:text-error min-w-[32px] min-h-[32px] flex items-center justify-center"
                                             >
                                                 <Trash2 className="h-3 w-3" />
                                             </button>
@@ -808,7 +874,8 @@ function ExperienceCard({
                                         bullets: [...(entry.bullets ?? []), ""],
                                     })
                                 }
-                                className="flex items-center gap-1 text-xs text-accent hover:text-accent-hover"
+                                title="Add bullet point"
+                                className="flex items-center gap-1 text-xs text-accent hover:text-accent-hover min-h-[32px]"
                             >
                                 <Plus className="h-3 w-3" />
                                 Add bullet
@@ -836,7 +903,8 @@ function ExperienceCard({
                         {!locked && (
                             <button
                                 onClick={onDelete}
-                                className="flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs text-error/70 transition-colors hover:bg-error/10 hover:text-error"
+                                title="Remove this position"
+                                className="flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs text-error/70 transition-colors hover:bg-error/10 hover:text-error min-h-[32px]"
                             >
                                 <Trash2 className="h-3 w-3" />
                                 Remove
@@ -870,23 +938,38 @@ function EducationCard({
         <div className="rounded-xl border border-border bg-surface transition-colors hover:border-border/80">
             <button
                 onClick={onToggle}
-                className="flex w-full items-center gap-3 px-4 py-3 text-left"
+                className="flex w-full items-center gap-2 sm:gap-3 px-3 sm:px-4 py-3 text-left"
+                title={isExpanded ? "Collapse" : "Expand"}
             >
-                <GripVertical className="h-4 w-4 text-text-muted/30" />
+                <GripVertical className="hidden sm:block h-4 w-4 text-text-muted/30 shrink-0" />
                 <div className="min-w-0 flex-1">
-                    <p className="truncate text-sm font-medium text-text-primary">
+                    <p className="truncate text-xs sm:text-sm font-medium text-text-primary">
                         {entry.degree || "Degree"}
                         {entry.field ? ` in ${entry.field}` : ""}
                     </p>
-                    <p className="truncate text-xs text-text-muted">
+                    <p className="truncate text-[11px] sm:text-xs text-text-muted">
                         {entry.institution || "Institution"}
                     </p>
+                </div>
+                <div className="shrink-0">
+                    <svg
+                        className={cn(
+                            "h-4 w-4 text-text-muted transition-transform",
+                            isExpanded && "rotate-180"
+                        )}
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                        strokeWidth={2}
+                    >
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+                    </svg>
                 </div>
             </button>
 
             {isExpanded && (
-                <div className="space-y-3 border-t border-border px-4 pb-4 pt-3">
-                    <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-3 border-t border-border px-3 sm:px-4 pb-4 pt-3">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         <Field
                             label="Institution"
                             value={entry.institution}
@@ -929,7 +1012,8 @@ function EducationCard({
                     {!locked && (
                         <button
                             onClick={onDelete}
-                            className="flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs text-error/70 hover:bg-error/10 hover:text-error"
+                            title="Remove this education"
+                            className="flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs text-error/70 hover:bg-error/10 hover:text-error min-h-[32px]"
                         >
                             <Trash2 className="h-3 w-3" />
                             Remove
@@ -968,22 +1052,37 @@ function ProjectCard({
         <div className="rounded-xl border border-border bg-surface transition-colors hover:border-border/80">
             <button
                 onClick={onToggle}
-                className="flex w-full items-center gap-3 px-4 py-3 text-left"
+                title={isExpanded ? "Collapse" : "Expand"}
+                className="flex w-full items-center gap-2 sm:gap-3 px-3 sm:px-4 py-3 text-left"
             >
-                <GripVertical className="h-4 w-4 text-text-muted/30" />
+                <GripVertical className="hidden sm:block h-4 w-4 text-text-muted/30 shrink-0" />
                 <div className="min-w-0 flex-1">
-                    <p className="truncate text-sm font-medium text-text-primary">
+                    <p className="truncate text-xs sm:text-sm font-medium text-text-primary">
                         {entry.name || "Untitled Project"}
                     </p>
-                    <p className="truncate text-xs text-text-muted">
+                    <p className="truncate text-[11px] sm:text-xs text-text-muted">
                         {(entry.technologies ?? []).join(", ") ||
                             "No technologies listed"}
                     </p>
                 </div>
+                <div className="shrink-0">
+                    <svg
+                        className={cn(
+                            "h-4 w-4 text-text-muted transition-transform",
+                            isExpanded && "rotate-180"
+                        )}
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                        strokeWidth={2}
+                    >
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+                    </svg>
+                </div>
             </button>
 
             {isExpanded && (
-                <div className="space-y-3 border-t border-border px-4 pb-4 pt-3">
+                <div className="space-y-3 border-t border-border px-3 sm:px-4 pb-4 pt-3">
                     <Field
                         label="Name"
                         value={entry.name}
@@ -991,7 +1090,7 @@ function ProjectCard({
                         disabled={locked}
                     />
                     <div>
-                        <label className="mb-1.5 block text-xs font-medium text-text-muted">
+                        <label className="mb-1.5 block text-[11px] sm:text-xs font-medium text-text-muted">
                             Description
                         </label>
                         <textarea
@@ -1021,14 +1120,14 @@ function ProjectCard({
 
                     {(entry.bullets ?? []).length > 0 && (
                         <div>
-                            <label className="mb-1.5 block text-xs font-medium text-text-muted">
+                            <label className="mb-1.5 block text-[11px] sm:text-xs font-medium text-text-muted">
                                 Bullets
                             </label>
                             {(entry.bullets ?? []).map((bullet, bi) => {
                                 const regenKey = `proj-${entry.id ?? ""}-bullet-${bi}`;
                                 return (
                                     <div key={bi} className="mb-2 flex items-start gap-2">
-                                        <span className="mt-2.5 text-xs text-text-muted">
+                                        <span className="mt-2.5 shrink-0 text-xs text-text-muted">
                                             •
                                         </span>
                                         <textarea
@@ -1040,15 +1139,15 @@ function ProjectCard({
                                             }}
                                             disabled={locked || isRegen(regenKey)}
                                             rows={2}
-                                            className="flex-1 resize-none rounded-lg border border-border bg-surface-elevated px-3 py-2 text-xs text-text-primary focus:border-accent/40 focus:outline-none disabled:opacity-50"
+                                            className="flex-1 min-w-0 resize-none rounded-lg border border-border bg-surface-elevated px-3 py-2 text-xs text-text-primary focus:border-accent/40 focus:outline-none disabled:opacity-50"
                                         />
                                         {!locked && (
-                                            <div className="mt-2 flex flex-col gap-1">
+                                            <div className="mt-1.5 sm:mt-2 flex flex-row sm:flex-col gap-1 shrink-0">
                                                 <button
                                                     onClick={() => onRegenerateBullet?.(bi)}
                                                     disabled={!!regenerating}
                                                     title="Regenerate this bullet"
-                                                    className="rounded p-1 text-text-muted hover:text-accent disabled:opacity-40"
+                                                    className="rounded p-1.5 text-text-muted hover:text-accent disabled:opacity-40 min-w-[32px] min-h-[32px] flex items-center justify-center"
                                                 >
                                                     {isRegen(regenKey) ? (
                                                         <Loader2 className="h-3 w-3 animate-spin" />
@@ -1064,7 +1163,7 @@ function ProjectCard({
                                                         onChange({ ...entry, bullets: next });
                                                     }}
                                                     title="Remove this bullet"
-                                                    className="rounded p-1 text-text-muted hover:text-error"
+                                                    className="rounded p-1.5 text-text-muted hover:text-error min-w-[32px] min-h-[32px] flex items-center justify-center"
                                                 >
                                                     <Trash2 className="h-3 w-3" />
                                                 </button>
@@ -1081,7 +1180,8 @@ function ProjectCard({
                                             bullets: [...(entry.bullets ?? []), ""],
                                         })
                                     }
-                                    className="flex items-center gap-1 text-xs text-accent hover:text-accent-hover"
+                                    title="Add bullet point"
+                                    className="flex items-center gap-1 text-xs text-accent hover:text-accent-hover min-h-[32px]"
                                 >
                                     <Plus className="h-3 w-3" />
                                     Add bullet
@@ -1094,7 +1194,8 @@ function ProjectCard({
                         {!locked && (
                             <button
                                 onClick={onDelete}
-                                className="flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs text-error/70 hover:bg-error/10 hover:text-error"
+                                title="Remove this project"
+                                className="flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs text-error/70 hover:bg-error/10 hover:text-error min-h-[32px]"
                             >
                                 <Trash2 className="h-3 w-3" />
                                 Remove
@@ -1290,22 +1391,24 @@ function SkillsEditor({
 
             {/* ── Format toggle ───────────────────────────────────── */}
             {!locked && (
-                <div className="mb-3 mt-3 flex items-center gap-2">
+                <div className="mb-3 mt-3 flex items-center gap-2 flex-wrap">
                     <span className="text-[11px] text-text-muted">Format:</span>
                     <button
                         onClick={hasCategories ? convertToFlat : undefined}
-                        className={`rounded-md px-2.5 py-1 text-[11px] transition-all ${!hasCategories
-                                ? "bg-accent/15 text-accent ring-1 ring-accent/30"
-                                : "bg-surface-elevated text-text-muted hover:text-text-secondary"
+                        title="Switch to flat list"
+                        className={`rounded-md px-2.5 py-1.5 text-[11px] transition-all min-h-[28px] ${!hasCategories
+                            ? "bg-accent/15 text-accent ring-1 ring-accent/30"
+                            : "bg-surface-elevated text-text-muted hover:text-text-secondary"
                             }`}
                     >
                         Flat list
                     </button>
                     <button
                         onClick={!hasCategories ? convertToCategorized : undefined}
-                        className={`rounded-md px-2.5 py-1 text-[11px] transition-all ${hasCategories
-                                ? "bg-accent/15 text-accent ring-1 ring-accent/30"
-                                : "bg-surface-elevated text-text-muted hover:text-text-secondary"
+                        title="Switch to categorized"
+                        className={`rounded-md px-2.5 py-1.5 text-[11px] transition-all min-h-[28px] ${hasCategories
+                            ? "bg-accent/15 text-accent ring-1 ring-accent/30"
+                            : "bg-surface-elevated text-text-muted hover:text-text-secondary"
                             }`}
                     >
                         Categorized
@@ -1330,7 +1433,8 @@ function SkillsEditor({
                                         </span>
                                         <button
                                             onClick={() => removeCategory(cat.label)}
-                                            className="text-[10px] text-text-muted hover:text-error"
+                                            title={`Remove ${cat.label} category`}
+                                            className="text-[10px] text-text-muted hover:text-error min-h-[28px]"
                                         >
                                             Remove
                                         </button>
@@ -1341,7 +1445,7 @@ function SkillsEditor({
                                 {cat.items.map((item) => (
                                     <span
                                         key={`${cat.label}-${item}`}
-                                        className="inline-flex items-center gap-1 rounded-md bg-surface-elevated px-2.5 py-1 text-xs text-text-secondary"
+                                        className="inline-flex items-center gap-1 rounded-md bg-surface-elevated px-2 py-1 sm:px-2.5 text-xs text-text-secondary"
                                     >
                                         {item}
                                         {!locked && (
@@ -1349,7 +1453,8 @@ function SkillsEditor({
                                                 onClick={() =>
                                                     removeSkillFromCategory(cat.label, item)
                                                 }
-                                                className="ml-0.5 text-text-muted hover:text-error"
+                                                title={`Remove ${item}`}
+                                                className="ml-0.5 text-text-muted hover:text-error min-w-[20px] min-h-[20px] flex items-center justify-center"
                                             >
                                                 ×
                                             </button>
@@ -1374,13 +1479,14 @@ function SkillsEditor({
                                 {flat.map((skill) => (
                                     <span
                                         key={skill}
-                                        className="inline-flex items-center gap-1 rounded-md bg-surface-elevated px-2.5 py-1 text-xs text-text-secondary"
+                                        className="inline-flex items-center gap-1 rounded-md bg-surface-elevated px-2 py-1 sm:px-2.5 text-xs text-text-secondary"
                                     >
                                         {skill}
                                         {!locked && (
                                             <button
                                                 onClick={() => removeFlatSkill(skill)}
-                                                className="ml-0.5 text-text-muted hover:text-error"
+                                                title={`Remove ${skill}`}
+                                                className="ml-0.5 text-text-muted hover:text-error min-w-[20px] min-h-[20px] flex items-center justify-center"
                                             >
                                                 ×
                                             </button>
@@ -1399,13 +1505,14 @@ function SkillsEditor({
                     {flat.map((skill) => (
                         <span
                             key={skill}
-                            className="inline-flex items-center gap-1 rounded-md bg-surface-elevated px-2.5 py-1 text-xs text-text-secondary"
+                            className="inline-flex items-center gap-1 rounded-md bg-surface-elevated px-2 py-1 sm:px-2.5 text-xs text-text-secondary"
                         >
                             {skill}
                             {!locked && (
                                 <button
                                     onClick={() => removeFlatSkill(skill)}
-                                    className="ml-0.5 text-text-muted hover:text-error"
+                                    title={`Remove ${skill}`}
+                                    className="ml-0.5 text-text-muted hover:text-error min-w-[20px] min-h-[20px] flex items-center justify-center"
                                 >
                                     ×
                                 </button>
@@ -1413,9 +1520,11 @@ function SkillsEditor({
                         </span>
                     ))}
                     {flat.length === 0 && (
-                        <span className="text-xs italic text-text-muted/40">
-                            No skills added yet
-                        </span>
+                        <EmptyState
+                            icon={Wrench}
+                            title="No skills added yet"
+                            description="Add your technical skills below"
+                        />
                     )}
                 </div>
             )}
@@ -1433,9 +1542,10 @@ function SkillsEditor({
                                             selectedCategory === cat.label ? null : cat.label
                                         )
                                     }
-                                    className={`rounded-md px-2.5 py-1 text-xs transition-all ${selectedCategory === cat.label
-                                            ? "bg-accent/15 text-accent ring-1 ring-accent/30"
-                                            : "bg-surface-elevated text-text-muted hover:text-text-secondary"
+                                    title={`Select ${cat.label}`}
+                                    className={`rounded-md px-2.5 py-1.5 text-xs transition-all min-h-[32px] ${selectedCategory === cat.label
+                                        ? "bg-accent/15 text-accent ring-1 ring-accent/30"
+                                        : "bg-surface-elevated text-text-muted hover:text-text-secondary"
                                         }`}
                                 >
                                     {cat.label}
@@ -1443,16 +1553,18 @@ function SkillsEditor({
                             ))}
                             <button
                                 onClick={() => setSelectedCategory(null)}
-                                className={`rounded-md px-2.5 py-1 text-xs transition-all ${selectedCategory === null
-                                        ? "bg-accent/15 text-accent ring-1 ring-accent/30"
-                                        : "bg-surface-elevated text-text-muted hover:text-text-secondary"
+                                title="Uncategorized skills"
+                                className={`rounded-md px-2.5 py-1.5 text-xs transition-all min-h-[32px] ${selectedCategory === null
+                                    ? "bg-accent/15 text-accent ring-1 ring-accent/30"
+                                    : "bg-surface-elevated text-text-muted hover:text-text-secondary"
                                     }`}
                             >
                                 Uncategorized
                             </button>
                             <button
                                 onClick={() => setShowNewCategory(!showNewCategory)}
-                                className="rounded-md bg-surface-elevated px-2.5 py-1 text-xs text-accent/70 hover:text-accent"
+                                title="Create new category"
+                                className="rounded-md bg-surface-elevated px-2.5 py-1.5 text-xs text-accent/70 hover:text-accent min-h-[32px]"
                             >
                                 + Category
                             </button>
@@ -1460,24 +1572,25 @@ function SkillsEditor({
                     )}
 
                     {showNewCategory && (
-                        <div className="flex gap-2">
+                        <div className="flex flex-col sm:flex-row gap-2">
                             <input
                                 value={newCategoryName}
                                 onChange={(e) => setNewCategoryName(e.target.value)}
                                 onKeyDown={(e) => e.key === "Enter" && addNewCategory()}
                                 placeholder="Category name (e.g., Frontend, Databases)..."
-                                className="flex-1 rounded-lg border border-border bg-surface-elevated px-3 py-1.5 text-xs text-text-primary placeholder:text-text-muted/50 focus:border-accent/40 focus:outline-none"
+                                className="flex-1 rounded-lg border border-border bg-surface-elevated px-3 py-2 text-xs text-text-primary placeholder:text-text-muted/50 focus:border-accent/40 focus:outline-none"
                             />
                             <button
                                 onClick={addNewCategory}
-                                className="rounded-lg bg-accent/10 px-3 py-1.5 text-xs font-medium text-accent hover:bg-accent/15"
+                                title="Create category"
+                                className="rounded-lg bg-accent/10 px-3 py-2 text-xs font-medium text-accent hover:bg-accent/15 min-h-[36px] shrink-0"
                             >
                                 Create
                             </button>
                         </div>
                     )}
 
-                    <div className="flex gap-2">
+                    <div className="flex flex-col sm:flex-row gap-2">
                         <input
                             value={input}
                             onChange={(e) => setInput(e.target.value)}
@@ -1489,12 +1602,13 @@ function SkillsEditor({
                                         ? "Select a category first..."
                                         : "Add a skill..."
                             }
-                            className="flex-1 rounded-lg border border-border bg-surface-elevated px-3 py-1.5 text-xs text-text-primary placeholder:text-text-muted/50 focus:border-accent/40 focus:outline-none"
+                            className="flex-1 rounded-lg border border-border bg-surface-elevated px-3 py-2 text-xs text-text-primary placeholder:text-text-muted/50 focus:border-accent/40 focus:outline-none"
                         />
                         <button
                             onClick={addSkill}
                             disabled={hasCategories && !selectedCategory}
-                            className="rounded-lg bg-accent/10 px-3 py-1.5 text-xs font-medium text-accent hover:bg-accent/15 disabled:cursor-not-allowed disabled:opacity-40"
+                            title="Add skill"
+                            className="rounded-lg bg-accent/10 px-3 py-2 text-xs font-medium text-accent hover:bg-accent/15 disabled:cursor-not-allowed disabled:opacity-40 min-h-[36px] shrink-0"
                         >
                             Add
                         </button>
@@ -1504,8 +1618,6 @@ function SkillsEditor({
         </div>
     );
 }
-
-
 
 // ── Input Field ────────────────────────────────────────────────
 
@@ -1524,7 +1636,7 @@ function Field({
 }) {
     return (
         <div>
-            <label className="mb-1 block text-xs font-medium text-text-muted">
+            <label className="mb-1 block text-[11px] sm:text-xs font-medium text-text-muted">
                 {label}
             </label>
             <input
@@ -1532,7 +1644,7 @@ function Field({
                 onChange={(e) => onChange(e.target.value)}
                 placeholder={placeholder}
                 disabled={disabled}
-                className="w-full rounded-lg border border-border bg-surface-elevated px-3 py-1.5 text-xs text-text-primary placeholder:text-text-muted/50 focus:border-accent/40 focus:outline-none disabled:opacity-50"
+                className="w-full rounded-lg border border-border bg-surface-elevated px-3 py-2 text-xs text-text-primary placeholder:text-text-muted/50 focus:border-accent/40 focus:outline-none disabled:opacity-50"
             />
         </div>
     );

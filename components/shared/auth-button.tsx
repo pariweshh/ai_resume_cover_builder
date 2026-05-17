@@ -70,7 +70,7 @@ export function AuthButton() {
                 Pricing
             </Link>
             <div className="relative" ref={menuRef}>
-                <button
+                <button title="Account menu"
                     onClick={() => setMenuOpen((v) => !v)}
                     className="flex items-center gap-1.5 rounded-full py-1 pl-1 pr-2 transition-colors hover:bg-surface-hover"
                 >

@@ -95,7 +95,6 @@ export function ExportPanel({ resume, coverLetter }: ExportPanelProps) {
         }
     };
 
-
     const handleExportCoverLetter = async () => {
         if (!coverLetter) {
             toast.error("No cover letter to export");
@@ -122,8 +121,6 @@ export function ExportPanel({ resume, coverLetter }: ExportPanelProps) {
         }
     };
 
-
-
     const handlePrint = () => {
         handleExportResumePDF().then(() => {
             toast.info("PDF downloaded — open it to print");
@@ -131,10 +128,11 @@ export function ExportPanel({ resume, coverLetter }: ExportPanelProps) {
     };
 
     return (
-        <div className="mx-auto max-w-3xl space-y-8 p-8">
+        // 1. Padding scales: 16 → 24 → 32
+        <div className="mx-auto max-w-3xl space-y-6 p-4 sm:space-y-8 sm:p-6 lg:p-8">
             {/* Header */}
             <div>
-                <h2 className="font-display text-2xl text-text-primary">
+                <h2 className="font-display text-xl text-text-primary sm:text-2xl">
                     Export your resume
                 </h2>
                 <p className="mt-2 text-sm text-text-secondary">
@@ -144,10 +142,14 @@ export function ExportPanel({ resume, coverLetter }: ExportPanelProps) {
             </div>
 
             {/* Resume Info Card */}
-            <div className="rounded-xl border border-border bg-surface p-5">
-                <div className="flex items-center justify-between">
-                    <div>
-                        <p className="text-sm font-semibold text-text-primary">
+            {/* 2. Tighter padding on mobile; wrap-friendly flex so name + badge
+                  don't collide on narrow viewports */}
+            <div className="rounded-xl border border-border bg-surface p-3 sm:p-5">
+                {/* flex-wrap + gap-2 lets badge drop to second line if name is long */}
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                    {/* min-w-0 lets name truncate instead of pushing badge off */}
+                    <div className="min-w-0">
+                        <p className="truncate text-sm font-semibold text-text-primary">
                             {resume.basics.name}
                         </p>
                         <p className="text-xs text-text-muted">
@@ -156,8 +158,11 @@ export function ExportPanel({ resume, coverLetter }: ExportPanelProps) {
                         </p>
                     </div>
                     {resume.basics.summary && (
-                        <div className="rounded-lg bg-emerald/10 px-3 py-1">
-                            <p className="text-xs font-medium text-emerald">Ready to export</p>
+                        // shrink-0 keeps the badge from wrapping mid-word
+                        <div className="shrink-0 rounded-lg bg-emerald/10 px-2.5 py-1 sm:px-3">
+                            <p className="text-[11px] font-medium text-emerald sm:text-xs">
+                                Ready to export
+                            </p>
                         </div>
                     )}
                 </div>
@@ -174,16 +179,18 @@ export function ExportPanel({ resume, coverLetter }: ExportPanelProps) {
                     <button
                         onClick={handleExportResumePDF}
                         disabled={!!isExporting}
-                        className="group flex items-start gap-4 rounded-xl border border-border bg-surface p-5 text-left transition-all hover:border-white/[0.08] hover:bg-surface-elevated disabled:opacity-50"
+                        // 3. Icon shrinks on mobile: 40px → 48px. Gap: 12px → 16px.
+                        //    Padding: 12px → 20px.
+                        className="group flex items-start gap-3 rounded-xl border border-border bg-surface p-3 text-left transition-all hover:border-white/8 hover:bg-surface-elevated disabled:opacity-50 sm:gap-4 sm:p-5"
                     >
-                        <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-red-500/10 transition-colors group-hover:bg-red-500/15">
+                        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-red-500/10 transition-colors group-hover:bg-red-500/15 sm:h-12 sm:w-12">
                             {isExporting === "resume-pdf" ? (
                                 <Loader2 className="h-5 w-5 animate-spin text-red-400" />
                             ) : (
                                 <FileText className="h-5 w-5 text-red-400" />
                             )}
                         </div>
-                        <div className="flex-1">
+                        <div className="min-w-0 flex-1">
                             <p className="text-sm font-semibold text-text-primary">
                                 Resume as PDF
                             </p>
@@ -202,23 +209,23 @@ export function ExportPanel({ resume, coverLetter }: ExportPanelProps) {
                                 </span>
                             </div>
                         </div>
-                        <Download className="h-4 w-4 text-text-muted/40 transition-colors group-hover:text-text-muted" />
+                        <Download className="h-4 w-4 shrink-0 text-text-muted/40 transition-colors group-hover:text-text-muted" />
                     </button>
 
                     {/* DOCX */}
                     <button
                         onClick={handleExportResumeDOCX}
                         disabled={!!isExporting}
-                        className="group flex items-start gap-4 rounded-xl border border-border bg-surface p-5 text-left transition-all hover:border-white/[0.08] hover:bg-surface-elevated disabled:opacity-50"
+                        className="group flex items-start gap-3 rounded-xl border border-border bg-surface p-3 text-left transition-all hover:border-white/8 hover:bg-surface-elevated disabled:opacity-50 sm:gap-4 sm:p-5"
                     >
-                        <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-sky-500/10 transition-colors group-hover:bg-sky-500/15">
+                        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-sky-500/10 transition-colors group-hover:bg-sky-500/15 sm:h-12 sm:w-12">
                             {isExporting === "resume-docx" ? (
                                 <Loader2 className="h-5 w-5 animate-spin text-sky-400" />
                             ) : (
                                 <File className="h-5 w-5 text-sky-400" />
                             )}
                         </div>
-                        <div className="flex-1">
+                        <div className="min-w-0 flex-1">
                             <p className="text-sm font-semibold text-text-primary">
                                 Resume as DOCX
                             </p>
@@ -237,7 +244,7 @@ export function ExportPanel({ resume, coverLetter }: ExportPanelProps) {
                                 </span>
                             </div>
                         </div>
-                        <Download className="h-4 w-4 text-text-muted/40 transition-colors group-hover:text-text-muted" />
+                        <Download className="h-4 w-4 shrink-0 text-text-muted/40 transition-colors group-hover:text-text-muted" />
                     </button>
                 </div>
             </div>
@@ -252,16 +259,16 @@ export function ExportPanel({ resume, coverLetter }: ExportPanelProps) {
                     <button
                         onClick={handleExportCoverLetter}
                         disabled={!!isExporting}
-                        className="group flex w-full items-start gap-4 rounded-xl border border-border bg-surface p-5 text-left transition-all hover:border-white/[0.08] hover:bg-surface-elevated disabled:opacity-50"
+                        className="group flex w-full items-start gap-3 rounded-xl border border-border bg-surface p-3 text-left transition-all hover:border-white/8 hover:bg-surface-elevated disabled:opacity-50 sm:gap-4 sm:p-5"
                     >
-                        <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-emerald/10 transition-colors group-hover:bg-emerald/15">
+                        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-emerald/10 transition-colors group-hover:bg-emerald/15 sm:h-12 sm:w-12">
                             {isExporting === "cover-pdf" ? (
                                 <Loader2 className="h-5 w-5 animate-spin text-emerald" />
                             ) : (
                                 <FileText className="h-5 w-5 text-emerald" />
                             )}
                         </div>
-                        <div className="flex-1">
+                        <div className="min-w-0 flex-1">
                             <p className="text-sm font-semibold text-text-primary">
                                 Cover Letter as PDF
                             </p>
@@ -269,7 +276,7 @@ export function ExportPanel({ resume, coverLetter }: ExportPanelProps) {
                                 Clean, printable format with proper letter structure
                             </p>
                         </div>
-                        <Download className="h-4 w-4 text-text-muted/40 transition-colors group-hover:text-text-muted" />
+                        <Download className="h-4 w-4 shrink-0 text-text-muted/40 transition-colors group-hover:text-text-muted" />
                     </button>
                 </div>
             )}
@@ -284,16 +291,16 @@ export function ExportPanel({ resume, coverLetter }: ExportPanelProps) {
                     <button
                         onClick={handleExportBoth}
                         disabled={!!isExporting}
-                        className="group flex items-center gap-3 rounded-xl border border-accent/20 bg-accent/5 p-4 text-left transition-all hover:border-accent/30 hover:bg-accent/10 disabled:opacity-50"
+                        className="group flex items-center gap-3 rounded-xl border border-accent/20 bg-accent/5 p-3 text-left transition-all hover:border-accent/30 hover:bg-accent/10 disabled:opacity-50 sm:p-4"
                     >
-                        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-accent/10">
+                        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-accent/10">
                             {isExporting === "both" ? (
                                 <Loader2 className="h-5 w-5 animate-spin text-accent" />
                             ) : (
                                 <Download className="h-5 w-5 text-accent" />
                             )}
                         </div>
-                        <div>
+                        <div className="min-w-0">
                             <p className="text-sm font-semibold text-text-primary">
                                 Download Both Formats
                             </p>
@@ -304,12 +311,12 @@ export function ExportPanel({ resume, coverLetter }: ExportPanelProps) {
                     <button
                         onClick={handlePrint}
                         disabled={!!isExporting}
-                        className="group flex items-center gap-3 rounded-xl border border-border bg-surface p-4 text-left transition-all hover:border-white/[0.08] hover:bg-surface-elevated disabled:opacity-50"
+                        className="group flex items-center gap-3 rounded-xl border border-border bg-surface p-3 text-left transition-all hover:border-white/8 hover:bg-surface-elevated disabled:opacity-50 sm:p-4"
                     >
-                        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-violet-500/10">
+                        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-violet-500/10">
                             <Printer className="h-5 w-5 text-violet-400" />
                         </div>
-                        <div>
+                        <div className="min-w-0">
                             <p className="text-sm font-semibold text-text-primary">
                                 Print Resume
                             </p>
@@ -322,7 +329,7 @@ export function ExportPanel({ resume, coverLetter }: ExportPanelProps) {
             </div>
 
             {/* ATS Format Info */}
-            <div className="rounded-xl border border-border bg-surface p-5">
+            <div className="rounded-xl border border-border bg-surface p-3 sm:p-5">
                 <h3 className="mb-3 text-xs font-semibold uppercase tracking-wider text-text-muted">
                     ATS Format Guarantees
                 </h3>
@@ -338,7 +345,7 @@ export function ExportPanel({ resume, coverLetter }: ExportPanelProps) {
                         "Dynamic single-page sizing",
                     ].map((item) => (
                         <div key={item} className="flex items-center gap-2">
-                            <CheckCircle2 className="h-3.5 w-3.5 text-emerald/60" />
+                            <CheckCircle2 className="h-3.5 w-3.5 shrink-0 text-emerald/60" />
                             <span className="text-xs text-text-secondary">{item}</span>
                         </div>
                     ))}
@@ -355,24 +362,25 @@ export function ExportPanel({ resume, coverLetter }: ExportPanelProps) {
                         {exportHistory.map((item, i) => (
                             <div
                                 key={i}
-                                className="flex items-center gap-3 rounded-lg border border-border bg-surface px-4 py-2.5"
+                                className="flex items-center gap-3 rounded-lg border border-border bg-surface px-3 py-2.5 sm:px-4"
                             >
-                                <div className="flex h-7 w-7 items-center justify-center rounded-md bg-surface-elevated">
+                                <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-surface-elevated">
                                     {item.format === "PDF" || item.format === "PDF + DOCX" ? (
                                         <FileText className="h-3.5 w-3.5 text-red-400" />
                                     ) : (
                                         <File className="h-3.5 w-3.5 text-sky-400" />
                                     )}
                                 </div>
-                                <div className="flex-1 min-w-0">
+                                <div className="min-w-0 flex-1">
                                     <p className="truncate text-xs font-medium text-text-primary">
                                         {item.filename}
                                     </p>
                                 </div>
-                                <span className="rounded-md bg-surface-elevated px-2 py-0.5 text-[10px] text-text-muted">
+                                <span className="shrink-0 rounded-md bg-surface-elevated px-2 py-0.5 text-[10px] text-text-muted">
                                     {item.format}
                                 </span>
-                                <span className="text-[10px] text-text-muted/50">
+                                {/* Hide timestamp on very small screens — least important info */}
+                                <span className="hidden text-[10px] text-text-muted/50 sm:inline">
                                     {item.time}
                                 </span>
                             </div>

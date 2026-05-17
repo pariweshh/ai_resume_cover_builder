@@ -14,9 +14,9 @@ export function KeywordAnalysis({ analysis, mapping }: KeywordAnalysisProps) {
     const missing = mapping.missing ?? [];
 
     return (
-        <div className="space-y-5">
+        <div className="space-y-4 sm:space-y-5">
             {/* Job Info */}
-            <div className="rounded-xl border border-border bg-surface p-5">
+            <div className="rounded-xl border border-border bg-surface p-3 sm:p-5">
                 <h4 className="text-sm font-semibold text-text-primary">
                     {analysis.title || "Untitled Role"}
                 </h4>
@@ -30,7 +30,7 @@ export function KeywordAnalysis({ analysis, mapping }: KeywordAnalysisProps) {
 
             {/* Required Skills */}
             {(analysis.requiredSkills ?? []).length > 0 && (
-                <div className="rounded-xl border border-border bg-surface p-5">
+                <div className="rounded-xl border border-border bg-surface p-3 sm:p-5">
                     <h4 className="mb-3 text-xs font-semibold uppercase tracking-wider text-text-muted">
                         Required Skills
                     </h4>
@@ -40,11 +40,11 @@ export function KeywordAnalysis({ analysis, mapping }: KeywordAnalysisProps) {
                             return (
                                 <span
                                     key={skill}
-                                    className={`inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-xs ${matchStatus === "supported"
-                                            ? "bg-emerald/10 text-emerald"
-                                            : matchStatus === "partial"
-                                                ? "bg-warning/10 text-warning"
-                                                : "bg-error/10 text-error"
+                                    className={`inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs sm:py-0.5 ${matchStatus === "supported"
+                                        ? "bg-emerald/10 text-emerald"
+                                        : matchStatus === "partial"
+                                            ? "bg-warning/10 text-warning"
+                                            : "bg-error/10 text-error"
                                         }`}
                                 >
                                     {matchStatus === "supported" ? (
@@ -63,7 +63,7 @@ export function KeywordAnalysis({ analysis, mapping }: KeywordAnalysisProps) {
             )}
 
             {/* Evidence Details */}
-            <div className="rounded-xl border border-border bg-surface p-5">
+            <div className="rounded-xl border border-border bg-surface p-3 sm:p-5">
                 <h4 className="mb-3 text-xs font-semibold uppercase tracking-wider text-text-muted">
                     Evidence Map
                 </h4>
@@ -76,7 +76,7 @@ export function KeywordAnalysis({ analysis, mapping }: KeywordAnalysisProps) {
                         {supported.map((item) => (
                             <div
                                 key={item.keyword}
-                                className="mb-1 rounded-md bg-surface-elevated px-3 py-2"
+                                className="mb-1 rounded-md bg-surface-elevated px-2.5 py-1.5 sm:px-3 sm:py-2"
                             >
                                 <p className="text-xs font-medium text-text-primary">
                                     {item.keyword}
@@ -95,7 +95,7 @@ export function KeywordAnalysis({ analysis, mapping }: KeywordAnalysisProps) {
                         {partial.map((item) => (
                             <div
                                 key={item.keyword}
-                                className="mb-1 rounded-md bg-surface-elevated px-3 py-2"
+                                className="mb-1 rounded-md bg-surface-elevated px-2.5 py-1.5 sm:px-3 sm:py-2"
                             >
                                 <p className="text-xs font-medium text-text-primary">
                                     {item.keyword}
@@ -114,7 +114,7 @@ export function KeywordAnalysis({ analysis, mapping }: KeywordAnalysisProps) {
                         {missing.map((item) => (
                             <div
                                 key={item.keyword}
-                                className="mb-1 rounded-md bg-surface-elevated px-3 py-2"
+                                className="mb-1 rounded-md bg-surface-elevated px-2.5 py-1.5 sm:px-3 sm:py-2"
                             >
                                 <p className="text-xs font-medium text-text-primary">
                                     {item.keyword}

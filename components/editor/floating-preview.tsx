@@ -1,10 +1,10 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useRef, useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { GripHorizontal, X, Maximize2, Minimize2 } from "lucide-react";
 import type { ResumeSchema } from "@/types";
-import { DEFAULT_SECTION_ORDER, type ReorderableSection } from "@/types";
+import { DEFAULT_SECTION_ORDER } from "@/types";
 import { formatDate } from "@/lib/utils";
 import { parseSkills } from "@/lib/skills-utils";
 
@@ -16,12 +16,76 @@ type Props = {
 
 export function FloatingPreview({ resume, font, onClose }: Props) {
     const [expanded, setExpanded] = useState(false);
+    const [isMobile, setIsMobile] = useState(false);
+    const [mobileWidth, setMobileWidth] = useState(320);
     const constraintsRef = useRef<HTMLDivElement>(null);
+    const contentRef = useRef<HTMLDivElement>(null);
 
-    const width = expanded ? 520 : 280;
-    const height = expanded ? 720 : 400;
-    const scale = width / 794;
+    // Detect mobile viewport
+    useEffect(() => {
+        const mq = window.matchMedia("(max-width: 639px)");
+        setIsMobile(mq.matches);
+        const handler = (e: MediaQueryListEvent) => setIsMobile(e.matches);
+        mq.addEventListener("change", handler);
+        return () => mq.removeEventListener("change", handler);
+    }, []);
 
+    // Track mobile container width so the 794px preview can scale to fit
+    useEffect(() => {
+        if (!contentRef.current) return;
+        const el = contentRef.current;
+        setMobileWidth(el.clientWidth);
+        const observer = new ResizeObserver(([entry]) => {
+            if (entry) setMobileWidth(entry.contentRect.width);
+        });
+        observer.observe(el);
+        return () => observer.disconnect();
+    }, [isMobile]);
+
+    const desktopWidth = expanded ? 520 : 280;
+    const desktopHeight = expanded ? 720 : 400;
+    const desktopScale = desktopWidth / 794;
+    const mobileScale = mobileWidth / 794;
+
+    // ── Mobile: full-screen overlay ─────────────────────────────
+    // A draggable 280px panel on a 320px screen covers 88% of the
+    // viewport and is fiddly to interact with. Full-screen overlay
+    // gives a clean, usable preview with proper touch scrolling.
+    if (isMobile) {
+        return (
+            <div className="absolute inset-0 z-30 flex flex-col bg-white">
+                <div className="flex shrink-0 items-center justify-between border-b border-gray-200 bg-gray-50 px-4 py-2">
+                    <span className="text-sm font-medium text-gray-600">
+                        Preview
+                    </span>
+                    <button
+                        onClick={onClose}
+                        className="grid min-h-[44px] min-w-[44px] place-items-center rounded-lg text-gray-400 hover:text-gray-600"
+                        title="Close preview"
+                    >
+                        <X className="h-5 w-5" />
+                    </button>
+                </div>
+
+                <div
+                    ref={contentRef}
+                    className="min-h-0 flex-1 overflow-auto overscroll-contain"
+                >
+                    <div
+                        style={{
+                            zoom: mobileScale,
+                            width: 794,
+                            background: "#fff",
+                        }}
+                    >
+                        <PreviewContent resume={resume} font={font} />
+                    </div>
+                </div>
+            </div>
+        );
+    }
+
+    // ── Desktop: draggable floating panel ──────────────────────
     return (
         <div
             ref={constraintsRef}
@@ -37,10 +101,10 @@ export function FloatingPreview({ resume, font, onClose }: Props) {
                     boxShadow: "0 16px 48px rgba(0,0,0,0.4)",
                 }}
                 initial={{ x: 24, y: 24 }}
-                style={{ width, height }}
+                style={{ width: desktopWidth, height: desktopHeight }}
                 className="pointer-events-auto absolute flex flex-col overflow-hidden rounded-xl border border-border bg-white shadow-2xl"
             >
-                {/* Header */}
+                {/* Drag handle header */}
                 <div className="flex shrink-0 cursor-grab items-center justify-between border-b border-gray-200 bg-gray-50 px-3 py-1.5 active:cursor-grabbing">
                     <div className="flex items-center gap-1.5">
                         <GripHorizontal className="h-3.5 w-3.5 text-gray-400" />
@@ -50,39 +114,41 @@ export function FloatingPreview({ resume, font, onClose }: Props) {
                     </div>
                     <div className="flex items-center gap-1">
                         <button
+                            title={expanded ? "Collapse preview" : "Expand preview"}
                             onClick={(e) => {
                                 e.stopPropagation();
                                 setExpanded((v) => !v);
                             }}
-                            className="rounded p-0.5 text-gray-400 hover:text-gray-600"
+                            className="grid min-h-[32px] min-w-[32px] place-items-center rounded text-gray-400 hover:text-gray-600"
                         >
                             {expanded ? (
-                                <Minimize2 className="h-3 w-3" />
+                                <Minimize2 className="h-3.5 w-3.5" />
                             ) : (
-                                <Maximize2 className="h-3 w-3" />
+                                <Maximize2 className="h-3.5 w-3.5" />
                             )}
                         </button>
                         <button
+                            title="Close preview"
                             onClick={(e) => {
                                 e.stopPropagation();
                                 onClose();
                             }}
-                            className="rounded p-0.5 text-gray-400 hover:text-gray-600"
+                            className="grid min-h-[32px] min-w-[32px] place-items-center rounded text-gray-400 hover:text-gray-600"
                         >
-                            <X className="h-3 w-3" />
+                            <X className="h-3.5 w-3.5" />
                         </button>
                     </div>
                 </div>
 
-                <div
-                    className="h-full overflow-auto overflow-x-hidden"
-                // style={{ background: "#e5e5e5" }}
-                >
+                {/* Content: uses CSS zoom instead of transform:scale.
+                    zoom changes the element's layout dimensions so the
+                    parent scroll container sizes correctly — no phantom
+                    empty space at the bottom. */}
+                <div className="min-h-0 flex-1 overflow-auto overflow-x-hidden overscroll-contain">
                     <div
                         style={{
+                            zoom: desktopScale,
                             width: 794,
-                            transform: `scale(${scale})`,
-                            transformOrigin: "top left",
                             background: "#fff",
                         }}
                     >
