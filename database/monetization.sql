@@ -18,7 +18,9 @@ create table if not exists public.profiles (
   generations_used_this_month int default 0,
   generation_reset_date timestamptz default (date_trunc('month', now()) + interval '1 month'),
   created_at timestamptz default now() not null,
-  updated_at timestamptz default now() not null
+  updated_at timestamptz default now() not null,
+  day3_email_sent boolean default false,
+  day7_email_sent boolean default false
 );
 
 create index if not exists idx_profiles_stripe_customer
